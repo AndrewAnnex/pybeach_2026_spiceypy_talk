@@ -28,13 +28,50 @@
     <div class="reveal"><div class="slides">
       <section data-markdown>
         <textarea data-template>
-          # SpiceyPy
+          # Accessing NASA Planetary Ephemeris with SpiceyPy
           Andrew Annex, Ph.D.
+          Pybeach 2026
           ---
-          ## The one graph that matters
-          ```python
-          print('hello')
-          ```
+          ## About Me
+          * Planetary Scientist focus on Geology and Remote Sensing
+          * Mars 2020 rover science operations team
+          * VIPER lunar rover science operations team
+          * Geospatial & CV software focus
+          * (current) Senior Software Engineer @ Planet
+          * no CS degree
+
+          www.andrewannex.com
+          ---
+          ## What is SpiceyPy (briefly)
+          * Open source python wrapper library I started in 2014
+          * MIT licensed, macOS/windows/linux/emscripten (new)
+          * Wraps NASA JPL's SPICE toolkit (more on this soon)
+          * Supported by NASA PDART grant 80NSSC25K7040
+
+          okay, but what is the SPICE toolkit then?
+          ---
+          ## What is SPICE (briefly)
+          * Fortran Software Library for NASA scientists and engineers to work with Spacecraft and Planetary Ephemeris information
+          * Ephemeris information are the positions and orientations of planets and spacecraft as a function of time.
+          * Includes instrument extrinsics (state info) and some intrinsics (focal legnths, coordinate reference frames etc)
+
+          https://naif.jpl.nasa.gov/naif/spiceconcept.html
+          ---
+          ## Even more about SPICE
+          * Originaly components date to Voyager mission, but SPICE formalized in early 1980's
+          * Developed in Fortran77, translated to C (CSPICE) via f2c
+          * JPL provides Fortran, C, Java, IDL, MATLAB interfaces
+          * Over 600 individual functions
+
+          https://naif.jpl.nasa.gov/naif/spicehistory.html
+          ---
+          ** How does SPICE work?
+
+          * Ephemeris data stored in bespoke binary and ascii text files called "kernels"
+            - FK (frame kernel), IK (instrument kernel), LSK (leapseconds kernel)
+            - SPK (Spacecraft and Planet position kernel), PCK (Planetary orientation kernel), CK (camera pointing kernel)
+          * Loads state into kernel pool (in memory time & kv database)
+
           ---
           ## SpiceyPy, live in your browser
           ```python
