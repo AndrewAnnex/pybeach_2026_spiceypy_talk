@@ -1,0 +1,226 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js/dist/reveal.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js/dist/theme/moon.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js/plugin/highlight/monokai.css" />
+    <script src="mini-coi.js"></script>
+    <link rel="stylesheet" href="https://pyscript.net/releases/2026.7.3/core.css" />
+    <script type="module" src="https://pyscript.net/releases/2026.7.3/core.js"></script>
+    <style>
+      /* keep the PyScript editor readable inside reveal's themed slides */
+      .pyscript-demo { text-align: left; font-size: 0.55em; }
+      /* match reveal's monokai code theme (background/foreground from monokai.css) */
+      .pyscript-demo py-editor { background: #272822; color: #f8f8f2; border-radius: 6px; display: block; }
+      /* hide the "pyodide-<env>" label; it overlaps the run button (same trick as the docs) */
+      .pyscript-demo .py-editor-box::before { display: none; }
+      /* keep the matplotlib output on the slide (logical px, scaled with the deck) */
+      #mpl img { max-height: 360px; width: auto; display: block; margin: 0.5em auto 0; border-radius: 6px; }
+      /* code left, plot right; scoped to .present so reveal's own show/hide is untouched */
+      .reveal .slides section.present.side-by-side { display: grid !important; grid-template-columns: 3fr 2fr; gap: 24px; align-items: center; }
+      .side-by-side h2 { grid-column: 1 / -1; }
+      .side-by-side .pyscript-demo { font-size: 0.45em; }
+      .side-by-side #mpl img { max-height: 420px; max-width: 100%; margin: 0 auto; }
+    </style>
+  </head>
+  <body>
+    <div class="reveal"><div class="slides">
+      <section data-markdown>
+        <textarea data-template>
+          # SpiceyPy
+          Andrew Annex, Ph.D.
+          ---
+          ## The one graph that matters
+          ```python
+          print('hello')
+          ```
+          ---
+          ## SpiceyPy, live in your browser
+          ```python
+          import spiceypy as spice
+          print(spice.tkvrsn("TOOLKIT"))
+          ```
+          ---
+          ## Demo: Cassini at Saturn
+          Recreate the docs' Cassini position example, live:
+          - load real mission kernels (fetched into the browser)
+          - sample 4000 times across 2004–2005
+          - `spkpos` Cassini relative to the Saturn barycenter
+          - plot the trajectory in 3D with matplotlib
+          ---
+          ## Setup
+          A fresh interpreter for this demo, with matplotlib + kernels preloaded:
+          ```python
+          import numpy as np
+          import matplotlib
+          matplotlib.use("AGG")
+          import matplotlib.pyplot as plt
+          from mpl_toolkits.mplot3d import Axes3D
+          from pyscript import display
+          import spiceypy as spice
+          print(f'SpiceyPy for {spice.tkvrsn("TOOLKIT")} ready!')
+          ```
+          <!-- .element: data-env="cass" data-config="./pyscript_cassini.json" -->
+          ---
+          ## Load the kernels
+          Subset SPICE kernels, fetched from the web into the browser's filesystem:
+          ```python
+          spice.furnsh([
+              'kernels/lsk/naif0008.tls',
+              'kernels/sclk/cas00084.tsc',
+              'kernels/pck/cpck05Mar2004.tpc',
+              'kernels/fk/cas_v37.tf',
+              'kernels/ik/cas_iss_v09.ti',
+              'kernels/spk/020514_SE_SAT105_s.bsp',
+              'kernels/spk/981005_PLTEPH-DE405S_s.bsp',
+              'kernels/spk/030201AP_SK_SM546_T45_s.bsp',
+          ])
+          print(f'Loaded {spice.ktotal("ALL")} kernels')
+          ```
+          <!-- .element: data-env="cass" -->
+          ---
+          ## Pick a time range
+          Convert UTC strings to ephemeris time (seconds past J2000 TDB):
+          ```python
+          etOne = spice.str2et("Jun 20, 2004")
+          etTwo = spice.str2et("Dec 1, 2005")
+          print(f"ET One: {etOne}, ET Two: {etTwo}")
+          ```
+          <!-- .element: data-env="cass" -->
+          ---
+          ## Sample 4000 times
+          ```python
+          step = 4000
+          times = [x * (etTwo - etOne) / step + etOne for x in range(step)]
+          print(times[0:3])
+          ```
+          <!-- .element: data-env="cass" -->
+          ---
+          ## Where was Cassini?
+          `spkpos` is vectorized over times — one call, 4000 positions:
+          ```python
+          positions, lightTimes = spice.spkpos(
+              "Cassini", times, "J2000", "NONE", "SATURN BARYCENTER"
+          )
+          print("First position (km): ", positions[0])
+          print("First light time (s): ", lightTimes[0])
+          ```
+          <!-- .element: data-env="cass" -->
+          ---
+          <!-- .slide: class="side-by-side" -->
+          ## Plot the trajectory
+          ```python
+          spice.kclear()  # tidy the kernel pool
+          positions = positions.T  # -> (3, 4000)
+          fig = plt.figure(figsize=(6, 6))
+          ax = fig.add_subplot(111, projection="3d")
+          ax.plot(*positions)
+          ax.set_title("Cassini, 2004 to 2005")
+          display(fig, target="mpl", append=False)
+          ```
+          <!-- .element: data-env="cass" -->
+          <div id="mpl"></div>
+        </textarea>
+      </section>
+    </div></div>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js/dist/reveal.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js/plugin/markdown/markdown.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js/plugin/highlight/highlight.js"></script>
+    <script>
+      // Promotes ```python fences to runnable PyScript editors. Runs between
+      // RevealMarkdown (needs the rendered <pre><code>) and RevealHighlight
+      // (skips blocks meant to stay static highlighted code). Opt out of
+      // promotion per-block with <!-- .element: class="static" --> or by
+      // using [line-number] annotations.
+      const PyScriptPromote = {
+        id: 'pyscript-promote',
+        init(deck) {
+          const configured = new Set();
+          // reveal's markdown renderer emits <code class="python">, plain marked
+          // emits <code class="language-python"> — accept either
+          deck.getSlidesElement().querySelectorAll('pre > code.python, pre > code.language-python').forEach(code => {
+            const pre = code.parentElement;
+            if (pre.classList.contains('static') ||
+                pre.hasAttribute('data-line-numbers') ||
+                code.hasAttribute('data-line-numbers')) return;
+            const env = pre.getAttribute('data-env') || 'demo';
+            const editor = document.createElement('script');
+            editor.setAttribute('type', 'py-editor');
+            editor.setAttribute('env', env);
+            if (!configured.has(env)) {
+              editor.setAttribute('config', pre.getAttribute('data-config') || './pyscript.json');
+              configured.add(env);
+            }
+            editor.textContent = code.textContent;
+            const wrapper = document.createElement('div');
+            wrapper.className = 'pyscript-demo';
+            wrapper.appendChild(editor);
+            pre.replaceWith(wrapper);
+          });
+
+          // CodeMirror renders inside a shadow root, out of reach of page CSS,
+          // so inject a monokai theme + gutter hiding into each editor's shadow
+          // root as PyScript mounts them. The .ͼx token classes are generated
+          // names, stable for a pinned PyScript release — remap them if the
+          // core.js version above ever changes.
+          const EDITOR_THEME_CSS = `
+            .cm-gutters { display: none !important; }
+            .cm-editor { background: #272822 !important; color: #f8f8f2 !important; }
+            .cm-editor .cm-content { caret-color: #f8f8f2; }
+            .cm-editor .cm-cursor { border-left-color: #f8f8f2 !important; }
+            .cm-editor .cm-activeLine { background: rgba(255,255,255,.06) !important; }
+            .cm-editor .cm-selectionBackground { background: rgba(255,255,255,.25) !important; }
+            .ͼb { color: #f92672 !important; }              /* keywords */
+            .ͼe, .ͼf { color: #e6db74 !important; }    /* strings, f-strings */
+            .ͼd, .ͼc { color: #ae81ff !important; }    /* numbers, True/False */
+            .ͼm { color: #75715e !important; }              /* comments */
+            .ͼg, .ͼj { color: #a6e22e !important; }    /* def/class names */
+          `;
+          const themeEditors = () => {
+            document.querySelectorAll('py-editor *').forEach(el => {
+              if (el.shadowRoot && !el.shadowRoot.querySelector('style.monokai-theme')) {
+                const style = document.createElement('style');
+                style.className = 'monokai-theme';
+                style.textContent = EDITOR_THEME_CSS;
+                el.shadowRoot.appendChild(style);
+              }
+            });
+          };
+          new MutationObserver(() => {
+            themeEditors();
+            // slides are vertically centered before any plot output exists, so
+            // re-run reveal's layout when an image lands in an output div
+            document.querySelectorAll('.slides img:not([data-relayout])').forEach(img => {
+              img.dataset.relayout = '1';
+              img.addEventListener('load', () => deck.layout());
+              if (img.complete) deck.layout();
+            });
+          }).observe(document.body, { childList: true, subtree: true });
+          themeEditors();
+        }
+      };
+      // Smart space: on a slide with an editor that hasn't run yet, space runs
+      // it (each press runs the next unrun editor); once they've all been run,
+      // space advances as usual. Arrow keys always just navigate. A running
+      // cell doesn't block advancing — the worker keeps computing off-slide.
+      // Any click on a run button (mouse or synthetic) marks that editor as run.
+      document.addEventListener('click', e => {
+        const btn = e.target.closest?.('.py-editor-run-button');
+        if (btn) btn.closest('.py-editor-box').dataset.ran = '1';
+      }, true);
+      Reveal.initialize({
+        plugins: [RevealMarkdown, PyScriptPromote, RevealHighlight],
+        keyboard: {
+          32: event => {
+            if (event && event.shiftKey) { Reveal.prev(); return; }
+            const pending = [...Reveal.getCurrentSlide().querySelectorAll('.py-editor-box')]
+              .find(box => !box.dataset.ran);
+            if (pending) pending.querySelector('.py-editor-run-button').click();
+            else Reveal.next();
+          },
+        },
+      });
+    </script>
+  </body>
+</html>
