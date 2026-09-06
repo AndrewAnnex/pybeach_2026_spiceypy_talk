@@ -1,6 +1,6 @@
 # pybeach 2026 SpiceyPy talk
 
-Single-file reveal.js slide deck (`pybeach_2026_spiceypy_talk.html`) with live,
+Single-file reveal.js slide deck (`index.html`) with live,
 runnable SpiceyPy demos via PyScript/pyodide. Slides are authored as pure
 markdown inside the one `data-markdown` textarea; ```python fences are
 auto-promoted to interactive PyScript editors at load time by a custom inline
@@ -25,9 +25,11 @@ Sphinx extension) — consult those when adding examples.
 
 `.github/workflows/deploy.yml` publishes the whole folder to GitHub Pages on
 every push to `main` (official actions/deploy-pages flow, no build step). The
-repo's Pages settings must have "GitHub Actions" selected as the source once.
-The deck then lives at `https://<user>.github.io/<repo>/pybeach_2026_spiceypy_talk.html`;
-mini-coi works fine on Pages (HTTPS, same origin).
+repo's Pages settings must have "GitHub Actions" selected as the source once;
+the live URL is then shown in the workflow run's deploy step. The deck is
+`index.html`, so the repo's root Pages URL serves it directly. Pages must be
+served over HTTPS (the default) — mini-coi's service worker needs a secure
+context, so the live cells break on plain http.
 
 ## Files
 
