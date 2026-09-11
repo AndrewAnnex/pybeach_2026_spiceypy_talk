@@ -22,6 +22,10 @@
       .side-by-side h2 { grid-column: 1 / -1; }
       .side-by-side .pyscript-demo { font-size: 0.45em; }
       .side-by-side #mpl img { max-height: 420px; max-width: 100%; margin: 0 auto; }
+      .side-by-side p, .side-by-side ul { text-align: left; }
+      /* images in a side-by-side slide; beats reveal's default img frame */
+      .reveal .side-by-side img { max-height: 460px; max-width: 100%; margin: 0 auto; display: block;
+                                  border: none; background: none; box-shadow: none; border-radius: 6px; }
     </style>
   </head>
   <body>
@@ -57,20 +61,41 @@
 
           https://naif.jpl.nasa.gov/naif/spiceconcept.html
           ---
+          ## What can you do with SPICE (briefly)
+          * lookup/replay NASA mission and planetary ephemeris
+            - where was the spacecraft at this date
+            - where was Phobos (a moon) at this date
+          * compute viewing geometry info and occultations
+            - when will this asteroid pass infront of this star from this surface point
+            - what is the illumination geometry at this date at this surface point
+          * coordinate, time, and frame conversions
+
+          https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/info/mostused.html
+          ---
           ## Even more about SPICE
           * Originaly components date to Voyager mission, but SPICE formalized in early 1980's
-          * Developed in Fortran77, translated to C (CSPICE) via f2c
+          * Developed in F77, translated to C (CSPICE) via f2c
           * JPL provides Fortran, C, Java, IDL, MATLAB interfaces
           * Over 600 individual functions
 
           https://naif.jpl.nasa.gov/naif/spicehistory.html
           ---
-          ** How does SPICE work?
+          ## How does SPICE work?
 
           * Ephemeris data stored in bespoke binary and ascii text files called "kernels"
             - FK (frame kernel), IK (instrument kernel), LSK (leapseconds kernel)
             - SPK (Spacecraft and Planet position kernel), PCK (Planetary orientation kernel), CK (camera pointing kernel)
-          * Loads state into kernel pool (in memory time & kv database)
+          * Loads state into kernel pool
+            - functionally an in-memory time & kv database
+
+           #### more on this later...
+          ---
+          ## What else uses or compares to SPICE?
+
+          * JPL Horizons (web/telnet/astropy/astroquery)
+            - web-base api, little room for customization
+
+          ### SPICE is not STK/GMAT, lower level tool
 
           ---
           ## SpiceyPy, live in your browser
@@ -158,6 +183,13 @@
           ```
           <!-- .element: data-env="cass" -->
           <div id="mpl"></div>
+          ---
+          <!-- .slide: class="side-by-side" -->
+          ## Straight from the docs
+          Same example, same figure: the SpiceyPy docs show this pre-rendered
+          plot until you run the cell yourself.
+
+          <img crossorigin="anonymous" alt="Cassini trajectory plot from the SpiceyPy docs" src="https://spiceypy.readthedocs.io/en/main/_images/exampleoneplot_min.png">
         </textarea>
       </section>
     </div></div>

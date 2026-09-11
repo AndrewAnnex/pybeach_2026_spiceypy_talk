@@ -88,6 +88,17 @@ context, so the live cells break on plain http.
   partly via inline display styles; scoping to `.present` avoids fighting it.
   Reusable for any code+output slide; give the output div an id and add an
   `#id img` sizing rule.
+- **Images**: a plain markdown `![](https://…)` for a CROSS-ORIGIN image fails
+  silently (blank slide, `net::ERR_FAILED` in console). mini-coi enables
+  COEP `require-corp`; a plain `<img>` is fetched no-cors, so the service worker
+  receives an opaque response it cannot attach `Cross-Origin-Resource-Policy`
+  to, and the browser blocks it. Fixes: raw
+  `<img crossorigin="anonymous" src="…">` (needs the host to send
+  `access-control-allow-origin`, as readthedocs does), or commit the file to
+  the repo and use a relative path — same-origin, no CORS, works offline, and
+  the safer choice for presenting. Local images can use plain `![]()`.
+  Reveal's default `section img` frame (4px border + background) is overridden
+  by the `.reveal .side-by-side img` rule.
 - **Smart spacebar**: custom `keyboard: {32: ...}` binding — space runs the
   first unrun editor on the current slide, else advances; shift+space goes
   back; arrows always just navigate. "Run" is tracked via a `data-ran` marker
