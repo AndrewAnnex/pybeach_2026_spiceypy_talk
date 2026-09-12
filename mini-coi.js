@@ -14,12 +14,16 @@
     addEventListener('fetch', e => {
       const { request: r } = e;
       if (r.cache === 'only-if-cached' && r.mode !== 'same-origin') return;
+      // pybeach deck patch: let the browser fetch cross-origin no-cors requests (map tiles,
+      // images) itself; re-fetching them here returns opaque responses that fail to load.
+      // Paired with COEP credentialless below, which allows them without CORP headers.
+      if (r.mode === 'no-cors' && new URL(r.url).origin !== location.origin) return;
       e.respondWith(fetch(r).then(r => {
         const { body, status, statusText } = r;
         if (!status || status > 399) return r;
         const h = new Headers(r.headers);
         h.set('Cross-Origin-Opener-Policy', 'same-origin');
-        h.set('Cross-Origin-Embedder-Policy', 'require-corp');
+        h.set('Cross-Origin-Embedder-Policy', 'credentialless');
         h.set('Cross-Origin-Resource-Policy', 'cross-origin');
         return new Response(status == 204 ? null : body, { status, statusText, headers: h });
       }));

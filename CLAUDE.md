@@ -38,7 +38,19 @@ context, so the live cells break on plain http.
 - `pyscript_cassini.json` — config for the `cass` env: numpy, matplotlib,
   spiceypy, plus kernel files fetched from the AndrewAnnex/spiceypylessonkernels
   GitHub repo into the browser FS (copied from the docs' cassini example config).
-- `mini-coi.js` — COI service-worker shim, copied from `../SpiceyPy/docs/`.
+- `mini-coi.js` — COI service-worker shim, originally copied from `../SpiceyPy/docs/`
+  but PATCHED (don't overwrite it with the docs copy): COEP is `credentialless`
+  instead of `require-corp`, and the worker skips cross-origin `no-cors` requests.
+  Without the patch, Leaflet map tiles (folium slide) fail with `net::ERR_FAILED`:
+  the worker's re-fetch returns an opaque response that never loads, while the
+  same tile works as a plain `<img>`. Tradeoff: Safari lacks `credentialless`, so
+  the deck may not be cross-origin isolated there — present from Chrome/Firefox.
+- Folium basemap (`M20_HiRISE_RGB_CTX_mosaic_25cm_v7_Merge_LERC_clip`, MMGIS) is a
+  web-mercator **TMS** tileset (rows count from the bottom; see its
+  `tilemapresource.xml`), zoom 8–19: needs `tms=True`, default CRS (no
+  `crs='EPSG4326'`), `max_native_zoom=19`. Wrong scheme = 403s. The `map-slide`
+  class gives equal `minmax(0, 1fr)` columns and stretches the folium iframe to the
+  editor's height (plain `1fr` lets long code lines widen the editor column).
 
 ## How the deck works (all inline in the html)
 

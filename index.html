@@ -23,6 +23,12 @@
       .side-by-side .pyscript-demo { font-size: 0.45em; }
       .side-by-side #mpl img { max-height: 420px; max-width: 100%; margin: 0 auto; }
       .side-by-side p, .side-by-side ul { text-align: left; }
+      /* folium output: hide Jupyter's "Trust Notebook" fallback text; square map instead of 60% height */
+      #folium_m20 span { display: none; }
+      /* map-slide: equal columns, map stretched to the editor's height (replaces folium's 60% padding box) */
+      .reveal .slides section.present.side-by-side.map-slide { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; }
+      .map-slide #folium_m20 > div, .map-slide #folium_m20 > div > div { height: 100% !important; padding-bottom: 0 !important; }
+      .map-slide #folium_m20 iframe { max-width: 100%; max-height: 100%; }  /* undo reveal's 95% iframe cap */
       /* images in a side-by-side slide; beats reveal's default img frame */
       .reveal .side-by-side img { max-height: 460px; max-width: 100%; margin: 0 auto; display: block;
                                   border: none; background: none; box-shadow: none; border-radius: 6px; }
@@ -190,6 +196,92 @@
           plot until you run the cell yourself.
 
           <img crossorigin="anonymous" alt="Cassini trajectory plot from the SpiceyPy docs" src="https://spiceypy.readthedocs.io/en/main/_images/exampleoneplot_min.png">
+
+          ---
+          ## Demo: Mars Perseverance Rover Three Forks Sample Depo
+
+
+          ---
+          ## Load Kernels
+          ```python
+          import numpy as np
+          import matplotlib
+          matplotlib.use("AGG")
+          import matplotlib.pyplot as plt
+          from pyscript import display
+          import spiceypy
+          print('ready!')
+          ```
+          <!-- .element: data-env="m20" data-config="./pyscript_m20.json" -->
+          ---
+          ## Define start and end dates and sample points
+          ```python
+          import os
+          # metakernel PATH_VALUES are relative to the working directory
+          if os.path.isdir('m20_three_forks_demo'): os.chdir('m20_three_forks_demo')
+          spiceypy.furnsh('m2020_v16_221216_230201.tm')
+          print(f"We loaded {spiceypy.ktotal('ALL')} Kernel files")
+          sol_648 = spiceypy.str2et('2022-12-16')
+          sol_693 = spiceypy.str2et('2023-01-31')
+          times = np.linspace(sol_648, sol_693, num=45*24*20, endpoint=True)
+          print(f"Sampling {len(times)} over 45 sols")
+          ```
+          <!-- .element: data-env="m20" -->
+          ---
+          ## grab the positions
+          ```python
+          positions, lttimes = spiceypy.spkpos("M2020", times, "IAU_MARS", "lt+s", "MARS")
+          print(f"Successfully grabbed {len(positions)} positions in IAU_MARS frame.")
+          # convert from rectangular to latitudinal coordinates (in radians).
+          r, lon, lat = np.array([spiceypy.reclat(p) for p in positions]).T
+          # convert to degrees
+          lon, lat = np.degrees(lon), np.degrees(lat)
+          ```
+          <!-- .element: data-env="m20" -->
+          ---
+          <!-- .slide: class="side-by-side" -->
+          ## Plot the Rover's Traverse
+          ```python
+          fig = plt.figure(figsize=(6, 6))
+          ax = fig.add_subplot(111)
+          ax.plot(lon, lat)
+          ax.scatter(lon, lat, c=times)
+          ax.ticklabel_format(useOffset=False, style="plain")
+          ax.tick_params(axis="x", labelrotation=45)
+          ax.set_xlabel("longitude (°E)"); ax.set_ylabel("latitude (°N)")
+          ax.set_title("M20 Rover Traverse Sols 648-693")
+          fig.tight_layout()
+          display(fig, target="mplm20", append=False)
+          ```
+          <!-- .element: data-env="m20" -->
+          <div id="mplm20"></div>
+          ---
+          <!-- .slide: class="side-by-side map-slide" -->
+          ## Plot the Rover's Traverse, But Better!
+          ```python
+          import folium
+          tiles=('https://mars.nasa.gov/mmgis-maps/M20/Layers/'
+                 'M20_HiRISE_RGB_CTX_mosaic_25cm_v7_Merge_LERC_clip/'
+                 '{z}/{x}/{y}.png')
+          m = folium.Map(
+              location=[np.median(lat), np.median(lon)],
+              zoom_start=17, max_zoom=21, tiles=None
+          )
+          # HiRISE mosaic: web-mercator TMS tiles (rows count from the bottom)
+          folium.TileLayer(tiles, attr='NASA/JPL/Caltech/UofA', name='HiRISE',
+                           tms=True, max_native_zoom=19, max_zoom=21).add_to(m)
+          utc_times = spiceypy.et2utc(times, 'C', 0)
+          folium.PolyLine(list(zip(lat, lon)), color='green').add_to(m)
+          for la, lo, t in list(zip(lat, lon, utc_times))[::50]:
+                folium.Marker((la, lo), tooltip=t).add_to(m)
+          folium.LayerControl().add_to(m)
+          spiceypy.kclear()  # tidy the kernel pool
+          display(m, target="folium_m20", append=False)
+          ```
+          <!-- .element: data-env="m20" -->
+          <div id="folium_m20"></div>
+
+
         </textarea>
       </section>
     </div></div>
