@@ -32,6 +32,15 @@
       /* images in a side-by-side slide; beats reveal's default img frame */
       .reveal .side-by-side img { max-height: 460px; max-width: 100%; margin: 0 auto; display: block;
                                   border: none; background: none; box-shadow: none; border-radius: 6px; }
+      /* run feedback: pulsing monokai-green outline while running, status line under the editor */
+      .pyscript-demo.is-running py-editor { animation: cell-pulse 1.2s ease-in-out infinite; }
+      @keyframes cell-pulse {
+        0%, 100% { box-shadow: 0 0 0 2px rgba(166, 226, 46, .9), 0 0 4px rgba(166, 226, 46, .2); }
+        50%      { box-shadow: 0 0 0 2px rgba(166, 226, 46, .9), 0 0 22px rgba(166, 226, 46, .7); }
+      }
+      .cell-status { font-family: monospace; font-size: .8em; min-height: 1.4em; margin-top: 4px; text-align: right; color: #75715e; }
+      .cell-status.running, .cell-status.done { color: #a6e22e; }
+      .cell-status.failed { color: #f92672; }
     </style>
   </head>
   <body>
@@ -348,8 +357,50 @@
               }
             });
           };
+          // Run feedback: pulse the editor and show a live timer while a cell runs
+          // (PyScript toggles .running on the run button), then "ran in X". The first
+          // run in an env includes Python startup, so say so.
+          const startedEnvs = new Set();
+          const fmtMs = ms => ms < 1000 ? `${Math.round(ms)} ms` : `${(ms / 1000).toFixed(2)} s`;
+          const timeRuns = () => {
+            document.querySelectorAll('.pyscript-demo .py-editor-run-button:not([data-timed])').forEach(btn => {
+              btn.dataset.timed = '1';
+              const wrapper = btn.closest('.pyscript-demo');
+              const env = wrapper.querySelector('py-editor')?.getAttribute('env');
+              const status = document.createElement('div');
+              status.className = 'cell-status';
+              wrapper.appendChild(status);
+              let t0 = 0, tick = 0, cold = false;
+              new MutationObserver(() => {
+                const running = btn.classList.contains('running');
+                if (running && !t0) {
+                  t0 = performance.now();
+                  cold = !startedEnvs.has(env);
+                  startedEnvs.add(env);
+                  wrapper.classList.add('is-running');
+                  status.className = 'cell-status running';
+                  const draw = () => status.textContent =
+                    `running… ${fmtMs(performance.now() - t0)}${cold ? ' (starting Python)' : ''}`;
+                  draw();
+                  tick = setInterval(draw, 100);
+                } else if (!running && t0) {
+                  clearInterval(tick);
+                  const ms = performance.now() - t0;
+                  t0 = 0;
+                  wrapper.classList.remove('is-running');
+                  const out = wrapper.querySelector('.py-editor-output')?.textContent ?? '';
+                  const failed = /Traceback \(most recent call last\)|^\w+Error:/m.test(out);
+                  status.className = `cell-status ${failed ? 'failed' : 'done'}`;
+                  status.textContent = `${failed ? '✗ failed after' : '✓ ran in'} ${fmtMs(ms)}` +
+                    (cold ? ' (incl. Python startup)' : '');
+                  deck.layout();
+                }
+              }).observe(btn, { attributes: true, attributeFilter: ['class'] });
+            });
+          };
           new MutationObserver(() => {
             themeEditors();
+            timeRuns();
             // slides are vertically centered before any plot output exists, so
             // re-run reveal's layout when an image lands in an output div
             document.querySelectorAll('.slides img:not([data-relayout])').forEach(img => {

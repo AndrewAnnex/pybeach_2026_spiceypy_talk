@@ -111,6 +111,15 @@ context, so the live cells break on plain http.
   the safer choice for presenting. Local images can use plain `![]()`.
   Reveal's default `section img` frame (4px border + background) is overridden
   by the `.reveal .side-by-side img` rule.
+- **Run feedback**: the promote plugin watches each run button's `.running` class
+  (PyScript sets it for the whole run) to pulse the editor and show a live timer
+  in a `.cell-status` line, then `✓ ran in X` / `✗ failed after X` (traceback in
+  output). First run per env is labeled as including Python startup.
+  Line-by-line highlighting was considered: feasible via `sys.monitoring`
+  (pyodide is Python 3.14, cell code runs as `<exec>` with editor-matching line
+  numbers), but installing it needs a PyScript `setup` cell, and setup cells boot
+  their env EAGERLY at page load — declined for now. A lazy install via the
+  editor element's API was not investigated.
 - **Smart spacebar**: custom `keyboard: {32: ...}` binding — space runs the
   first unrun editor on the current slide, else advances; shift+space goes
   back; arrows always just navigate. "Run" is tracked via a `data-ran` marker
