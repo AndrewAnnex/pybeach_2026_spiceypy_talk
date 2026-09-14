@@ -61,6 +61,14 @@
 
           www.andrewannex.com
           ---
+          # AI Usage Disclosure
+
+          * Project pre-dates Gen-AI
+          * This slide deck does not
+          * No, I didn't just one-shot this presentation.
+          * AI used to getting deployment correct and getting demos written
+
+          ---
           ## What is SpiceyPy (briefly)
           * Open source python wrapper library I started in 2014
           * MIT licensed, macOS/windows/linux/emscripten (new)
@@ -77,13 +85,13 @@
           https://naif.jpl.nasa.gov/naif/spiceconcept.html
           ---
           ## What can you do with SPICE (briefly)
+          * coordinate, time, and frame conversions
           * lookup/replay NASA mission and planetary ephemeris
             - where was the spacecraft at this date
             - where was Phobos (a moon) at this date
           * compute viewing geometry info and occultations
             - when will this asteroid pass infront of this star from this surface point
             - what is the illumination geometry at this date at this surface point
-          * coordinate, time, and frame conversions
 
           https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/info/mostused.html
           ---
@@ -111,20 +119,27 @@
             - web-base api, little room for customization
 
           ### SPICE is not STK/GMAT, lower level tool
+          ---
+          ## More on SpiceyPy
+          * ctypes-based wrapper, 600+ functions from CSPICE
+          * readthedocs at spiceypy.readthedocs.io
+          * 99% code coverage, CI/CD since 2014
+          * new cython submodule (2025)
+          * new emscripten distribution (2026) thanks to PEP 783
 
           ---
           ## SpiceyPy, live in your browser
+
+          * slide deck uses pyodide via pyscript
           ```python
           import spiceypy as spice
           print(spice.tkvrsn("TOOLKIT"))
           ```
           ---
           ## Demo: Cassini at Saturn
-          Recreate the docs' Cassini position example, live:
           - load real mission kernels (fetched into the browser)
           - sample 4000 times across 2004–2005
-          - `spkpos` Cassini relative to the Saturn barycenter
-          - plot the trajectory in 3D with matplotlib
+          - Plot Cassini relative to the Saturn barycenter in 3D with matplotlib
           ---
           ## Setup
           A fresh interpreter for this demo, with matplotlib + kernels preloaded:
@@ -289,7 +304,114 @@
           ```
           <!-- .element: data-env="m20" -->
           <div id="folium_m20"></div>
+          ---
+          ## Demo: Eclipses over Santa Monica
+          SPICE's geometry finder searches time for *when* something happens.
+          Load the Sun, Earth and Moon ephemeris for 2031 through 2033:
+          ```python
+          import os
+          import spiceypy as spice
+          spice.furnsh([
+              'santa_monica_eclipse/lsk/naif0012.tls',
+              'santa_monica_eclipse/pck/pck00010_sun_earth_moon.tpc',
+              'santa_monica_eclipse/spk/de438s_2031_2033.bsp',
+          ])
+          print(f'Loaded {spice.ktotal("ALL")} kernels')
+          ```
+          <!-- .element: data-env="eclipse" data-config="./pyscript_eclipse.json" -->
+          ---
+          ## Make Santa Monica a place: a frame kernel
+          Name the site, and give it a topocentric frame (+Z up, +X north), fixed to the Earth:
+          ```python
+          lon, lat = -118.4912, 34.0195  # Santa Monica, degrees
+          spice.boddef('SANTA_MONICA', 399901)
+          spice.lmpool([
+              "FRAME_SANTA_MONICA_TOPO = 1399901", "FRAME_1399901_NAME = 'SANTA_MONICA_TOPO'",
+              "FRAME_1399901_CLASS = 4", "FRAME_1399901_CLASS_ID = 1399901",
+              "FRAME_1399901_CENTER = 399901", "TKFRAME_1399901_RELATIVE = 'IAU_EARTH'",
+              "TKFRAME_1399901_SPEC = 'ANGLES'", "TKFRAME_1399901_UNITS = 'DEGREES'",
+              "TKFRAME_1399901_AXES = (3, 2, 3)", f"TKFRAME_1399901_ANGLES = ({-lon}, {lat - 90}, 180)",
+          ])
+          ```
+          <!-- .element: data-env="eclipse" -->
+          ---
+          ## ...and an SPK for where it is
+          Write the site's position on the Earth's ellipsoid into a new SPK file:
+          ```python
+          re, _, rp = spice.bodvrd('EARTH', 'RADII', 3)[1]
+          site = spice.georec(lon * spice.rpd(), lat * spice.rpd(), 0.0, re, (re - rp) / re)
+          state = [*site, 0, 0, 0]  # fixed to the ground: no velocity in IAU_EARTH
+          et0, et1 = spice.str2et('2030 DEC 31'), spice.str2et('2034 JAN 02')
+          if os.path.exists('santa_monica.bsp'): os.remove('santa_monica.bsp')
+          handle = spice.spkopn('santa_monica.bsp', 'Santa Monica', 0)
+          spice.spkw08(handle, 399901, 399, 'IAU_EARTH', et0, et1, 'Santa Monica',
+                       1, 2, [state, state], et0, et1 - et0)
+          spice.spkcls(handle)
+          spice.furnsh('santa_monica.bsp')
+          ```
+          <!-- .element: data-env="eclipse" -->
+          ---
+          ## When is the Moon near the Sun?
+          Search 2031 through 2033 for times the Moon is within 2° of the Sun:
+          ```python
+          search = spice.cell_double(2)
+          spice.wninsd(spice.str2et('2031 JAN 01'), spice.str2et('2034 JAN 01'), search)
+          close = spice.cell_double(1000)
+          spice.gfsep('MOON', 'SPHERE', 'IAU_MOON', 'SUN', 'SPHERE', 'IAU_SUN',
+                      'LT', 'SANTA_MONICA', '<', 2 * spice.rpd(), 0.0,
+                      spice.spd(), 500, search, close)
+          print(f'The Moon passes within 2° of the Sun {spice.wncard(close)} times')
+          ```
+          <!-- .element: data-env="eclipse" -->
+          ---
+          ## When does the Moon block the Sun?
+          Search only inside those windows, so this stays fast:
+          ```python
+          eclipses = spice.cell_double(1000)
+          spice.gfoclt('ANY', 'MOON', 'ELLIPSOID', 'IAU_MOON',
+                       'SUN', 'ELLIPSOID', 'IAU_SUN',
+                       'LT', 'SANTA_MONICA', 180.0, close, eclipses)
+          print(f'{spice.wncard(eclipses)} eclipses, day or night')
+          ```
+          <!-- .element: data-env="eclipse" -->
+          ---
+          ## ...while the Sun is up?
+          Elevation is latitude in Santa Monica's topocentric frame:
+          ```python
+          from zoneinfo import ZoneInfo
+          pacific = ZoneInfo('America/Los_Angeles')
+          visible = spice.cell_double(1000)
+          spice.gfposc('SUN', 'SANTA_MONICA_TOPO', 'LT+S', 'SANTA_MONICA',
+                       'LATITUDINAL', 'LATITUDE', '>', 0.0, 0.0,
+                       3600.0, 500, eclipses, visible)
+          for i in range(spice.wncard(visible)):
+              times = spice.et2datetime(spice.wnfetd(visible, i))
+              start, end = [t.astimezone(pacific) for t in times]
+              print(f'{start:%a %b %d %Y, %I:%M %p} to {end:%I:%M %p %Z}')
+          ```
+          <!-- .element: data-env="eclipse" -->
+          ---
+          ## When is each eclipse deepest?
+          The peak is when the Sun and Moon are closest together:
+          ```python
+          for i in range(spice.wncard(visible)):
+              eclipse = spice.cell_double(2)
+              spice.wninsd(*spice.wnfetd(visible, i), eclipse)
+              peak = spice.cell_double(2)
+              spice.gfsep('MOON', 'SPHERE', 'IAU_MOON', 'SUN', 'SPHERE', 'IAU_SUN',
+                          'LT+S', 'SANTA_MONICA', 'ABSMIN', 0.0, 0.0,
+                          60.0, 1, eclipse, peak)
+              when = spice.et2datetime(spice.wnfetd(peak, 0)[0]).astimezone(pacific)
+              print(f'peak at {when:%a %b %d %Y, %I:%M:%S %p %Z}')
+          spice.kclear()  # tidy the kernel pool
+          ```
+          <!-- .element: data-env="eclipse" -->
+          ---
+          # Thanks For Listening!
 
+          - Questions?
+
+          www.andrewannex.com
 
         </textarea>
       </section>
