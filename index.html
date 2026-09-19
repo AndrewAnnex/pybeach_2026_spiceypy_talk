@@ -3,14 +3,18 @@
   <head>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js/dist/reveal.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js/dist/theme/moon.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js/dist/theme/black.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js/plugin/highlight/monokai.css" />
     <script src="mini-coi.js"></script>
     <link rel="stylesheet" href="https://pyscript.net/releases/2026.7.3/core.css" />
     <script type="module" src="https://pyscript.net/releases/2026.7.3/core.js"></script>
     <style>
       /* keep the PyScript editor readable inside reveal's themed slides */
-      .pyscript-demo { text-align: left; font-size: 0.55em; }
+      .pyscript-demo { text-align: left; font-size: 0.6em; max-width: 900px; margin-inline: auto; }
+      /* CodeMirror sits in a shadow root on this div and resets to 16px, so the
+         code size must be set HERE — font-size on .pyscript-demo never reaches it.
+         18px fits the longest cell line (~80 chars) inside the 900px box. */
+      .pyscript-demo .py-editor-input > div { font-size: 18px; }
       /* match reveal's monokai code theme (background/foreground from monokai.css) */
       .pyscript-demo py-editor { background: #272822; color: #f8f8f2; border-radius: 6px; display: block; }
       /* hide the "pyodide-<env>" label; it overlaps the run button (same trick as the docs) */
@@ -20,9 +24,14 @@
       /* code left, plot right; scoped to .present so reveal's own show/hide is untouched */
       .reveal .slides section.present.side-by-side { display: grid !important; grid-template-columns: 3fr 2fr; gap: 24px; align-items: center; }
       .side-by-side h2 { grid-column: 1 / -1; }
-      .side-by-side .pyscript-demo { font-size: 0.45em; }
+      .side-by-side .pyscript-demo { font-size: 0.5em; }
       .side-by-side #mpl img { max-height: 420px; max-width: 100%; margin: 0 auto; }
       .side-by-side p, .side-by-side ul { text-align: left; }
+      /* let an intro line span both columns, like the heading does */
+      .side-by-side .full-width { grid-column: 1 / -1; }
+      /* reference links column: smaller, wrapping, no bullets crowding the edge */
+      .refs-slide .refs { font-size: 0.5em; text-align: left; overflow-wrap: anywhere; }
+      .refs-slide .refs ul { margin: 0.3em 0 0; }
       /* folium output: hide Jupyter's "Trust Notebook" fallback text; square map instead of 60% height */
       #folium_m20 span { display: none; }
       /* map-slide: equal columns, map stretched to the editor's height (replaces folium's 60% padding box) */
@@ -32,6 +41,10 @@
       /* images in a side-by-side slide; beats reveal's default img frame */
       .reveal .side-by-side img { max-height: 460px; max-width: 100%; margin: 0 auto; display: block;
                                   border: none; background: none; box-shadow: none; border-radius: 6px; }
+      /* star-history chart: equal columns, image fills its half (no max-height cap) */
+      .reveal .slides section.present.side-by-side.star-slide { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+      .reveal .star-slide a { display: block; width: 100%; }
+      .reveal .star-slide img { width: 100%; height: auto; max-height: none; }
       /* run feedback: pulsing monokai-green outline while running, status line under the editor */
       .pyscript-demo.is-running py-editor { animation: cell-pulse 1.2s ease-in-out infinite; }
       @keyframes cell-pulse {
@@ -69,13 +82,20 @@
           * AI used to getting deployment correct and getting demos written
 
           ---
+          <!-- .slide: class="side-by-side star-slide" -->
           ## What is SpiceyPy (briefly)
           * Open source python wrapper library I started in 2014
-          * MIT licensed, macOS/windows/linux/emscripten (new)
+          * MIT licensed
+          * macOS windows linux emscripten (new)
           * Wraps NASA JPL's SPICE toolkit (more on this soon)
           * Supported by NASA PDART grant 80NSSC25K7040
 
+          <a href="https://www.star-history.com/?repos=andrewannex%2Fspiceypy&type=date&releases=&legend=bottom-right">
+            <img alt="SpiceyPy GitHub star history" src="images/star_history_spiceypy.png" />
+          </a>
+
           okay, but what is the SPICE toolkit then?
+          <!-- .element: class="full-width" -->
           ---
           ## What is SPICE (briefly)
           * Fortran Software Library for NASA scientists and engineers to work with Spacecraft and Planetary Ephemeris information
@@ -136,6 +156,7 @@
           print(spice.tkvrsn("TOOLKIT"))
           ```
           ---
+          <!-- .slide: id="cassini" -->
           ## Demo: Cassini at Saturn
           - load real mission kernels (fetched into the browser)
           - sample 4000 times across 2004–2005
@@ -222,6 +243,7 @@
           <img crossorigin="anonymous" alt="Cassini trajectory plot from the SpiceyPy docs" src="https://spiceypy.readthedocs.io/en/main/_images/exampleoneplot_min.png">
 
           ---
+          <!-- .slide: id="m20" -->
           ## Demo: Mars Perseverance Rover Three Forks Sample Depo
 
 
@@ -305,6 +327,7 @@
           <!-- .element: data-env="m20" -->
           <div id="folium_m20"></div>
           ---
+          <!-- .slide: id="eclipse" -->
           ## Demo: Eclipses over Santa Monica
           SPICE's geometry finder searches time for *when* something happens.
           Load the Sun, Earth and Moon ephemeris for 2031 through 2033:
@@ -320,17 +343,19 @@
           ```
           <!-- .element: data-env="eclipse" data-config="./pyscript_eclipse.json" -->
           ---
-          ## Make Santa Monica a place: a frame kernel
+          ## Make Santa Monica Frame Kernel
           Name the site, and give it a topocentric frame (+Z up, +X north), fixed to the Earth:
           ```python
           lon, lat = -118.4912, 34.0195  # Santa Monica, degrees
           spice.boddef('SANTA_MONICA', 399901)
           spice.lmpool([
-              "FRAME_SANTA_MONICA_TOPO = 1399901", "FRAME_1399901_NAME = 'SANTA_MONICA_TOPO'",
-              "FRAME_1399901_CLASS = 4", "FRAME_1399901_CLASS_ID = 1399901",
-              "FRAME_1399901_CENTER = 399901", "TKFRAME_1399901_RELATIVE = 'IAU_EARTH'",
+              "FRAME_SANTA_MONICA_TOPO = 1399901",
+              "FRAME_1399901_NAME = 'SANTA_MONICA_TOPO'", "FRAME_1399901_CLASS = 4",
+              "FRAME_1399901_CLASS_ID = 1399901", "FRAME_1399901_CENTER = 399901",
+              "TKFRAME_1399901_RELATIVE = 'IAU_EARTH'",
               "TKFRAME_1399901_SPEC = 'ANGLES'", "TKFRAME_1399901_UNITS = 'DEGREES'",
-              "TKFRAME_1399901_AXES = (3, 2, 3)", f"TKFRAME_1399901_ANGLES = ({-lon}, {lat - 90}, 180)",
+              "TKFRAME_1399901_AXES = (3, 2, 3)",
+              f"TKFRAME_1399901_ANGLES = ({-lon}, {lat - 90}, 180)",
           ])
           ```
           <!-- .element: data-env="eclipse" -->
@@ -339,7 +364,7 @@
           Write the site's position on the Earth's ellipsoid into a new SPK file:
           ```python
           re, _, rp = spice.bodvrd('EARTH', 'RADII', 3)[1]
-          site = spice.georec(lon * spice.rpd(), lat * spice.rpd(), 0.0, re, (re - rp) / re)
+          site = spice.georec(lon * spice.rpd(), lat * spice.rpd(), 0, re, 1 - rp / re)
           state = [*site, 0, 0, 0]  # fixed to the ground: no velocity in IAU_EARTH
           et0, et1 = spice.str2et('2030 DEC 31'), spice.str2et('2034 JAN 02')
           if os.path.exists('santa_monica.bsp'): os.remove('santa_monica.bsp')
@@ -391,8 +416,10 @@
           ```
           <!-- .element: data-env="eclipse" -->
           ---
+          <!-- .slide: class="side-by-side refs-slide" -->
           ## When is each eclipse deepest?
           The peak is when the Sun and Moon are closest together:
+          <!-- .element: class="full-width" -->
           ```python
           for i in range(spice.wncard(visible)):
               eclipse = spice.cell_double(2)
@@ -406,6 +433,13 @@
           spice.kclear()  # tidy the kernel pool
           ```
           <!-- .element: data-env="eclipse" -->
+          <div class="refs">compare to
+            <ul>
+              <li><a href="https://time.now/los-angeles/eclipses/2031-11-14/">time.now: Nov 14, 2031</a></li>
+              <li><a href="https://time.now/los-angeles/eclipses/2033-03-30/">time.now: Mar 30, 2033</a></li>
+              <li><a href="https://en.wikipedia.org/wiki/Solar_eclipse_of_March_30,_2033">Wikipedia: Mar 30, 2033</a></li>
+            </ul>
+          </div>
           ---
           # Thanks For Listening!
 
@@ -530,6 +564,13 @@
               img.addEventListener('load', () => deck.layout());
               if (img.complete) deck.layout();
             });
+            // same problem for the editors themselves: a cell mounts taller than the
+            // <pre> it replaced, and reveal keeps the pre-mount centering until the
+            // next slide change — deep-linking to a cell slide would clip the bottom
+            document.querySelectorAll('.py-editor-box:not([data-relayout])').forEach(box => {
+              box.dataset.relayout = '1';
+              deck.layout();
+            });
           }).observe(document.body, { childList: true, subtree: true });
           themeEditors();
         }
@@ -545,6 +586,9 @@
       }, true);
       Reveal.initialize({
         plugins: [RevealMarkdown, PyScriptPromote, RevealHighlight],
+        hash: true,
+        width: 1280,   // 16:9 slide area; reveal's default is 960x700
+        height: 720,
         keyboard: {
           32: event => {
             if (event && event.shiftKey) { Reveal.prev(); return; }
