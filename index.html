@@ -65,12 +65,11 @@
           Pybeach 2026
           ---
           ## About Me
-          * Planetary Scientist focus on Geology and Remote Sensing
+          * Planetary Scientist: Geology and Remote Sensing
           * Mars 2020 rover science operations team
           * VIPER lunar rover science operations team
           * Geospatial & CV software focus
           * (current) Senior Software Engineer @ Planet
-          * no CS degree
 
           www.andrewannex.com
           ---
@@ -84,7 +83,7 @@
           ---
           <!-- .slide: class="side-by-side star-slide" -->
           ## What is SpiceyPy (briefly)
-          * Open source python wrapper library I started in 2014
+          * Open source python wrapper library for NASA JPL SPICE I started in 2014
           * MIT licensed
           * macOS windows linux emscripten (new)
           * Wraps NASA JPL's SPICE toolkit (more on this soon)
@@ -94,29 +93,29 @@
             <img alt="SpiceyPy GitHub star history" src="images/star_history_spiceypy.png" />
           </a>
 
-          okay, but what is the SPICE toolkit then?
+          okay, but what is JPL's SPICE toolkit then?
           <!-- .element: class="full-width" -->
           ---
           ## What is SPICE (briefly)
           * Fortran Software Library for NASA scientists and engineers to work with Spacecraft and Planetary Ephemeris information
           * Ephemeris information are the positions and orientations of planets and spacecraft as a function of time.
-          * Includes instrument extrinsics (state info) and some intrinsics (focal legnths, coordinate reference frames etc)
+          * Includes instrument extrinsics (state info) and some intrinsics (focal lengths, coordinate reference frames etc)
 
           https://naif.jpl.nasa.gov/naif/spiceconcept.html
           ---
           ## What can you do with SPICE (briefly)
           * coordinate, time, and frame conversions
           * lookup/replay NASA mission and planetary ephemeris
-            - where was the spacecraft at this date
-            - where was Phobos (a moon) at this date
+            - where was the spacecraft at this date?
+            - where was Phobos (a moon) at this date?
           * compute viewing geometry info and occultations
-            - when will this asteroid pass infront of this star from this surface point
-            - what is the illumination geometry at this date at this surface point
+            - when will this asteroid pass in front of this star from this surface point?
+            - what is the illumination geometry at this date at this surface point?
 
           https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/info/mostused.html
           ---
           ## Even more about SPICE
-          * Originaly components date to Voyager mission, but SPICE formalized in early 1980's
+          * Originally components date to Voyager mission, but SPICE formalized in early 1980's
           * Developed in F77, translated to C (CSPICE) via f2c
           * JPL provides Fortran, C, Java, IDL, MATLAB interfaces
           * Over 600 individual functions
@@ -131,30 +130,51 @@
           * Loads state into kernel pool
             - functionally an in-memory time & kv database
 
-           #### more on this later...
+          #### more on this later...
           ---
           ## What else uses or compares to SPICE?
 
           * JPL Horizons (web/telnet/astropy/astroquery)
             - web-base api, little room for customization
+          * JPL MONTE (not open source)
 
-          ### SPICE is not STK/GMAT, lower level tool
+          #### SPICE is not STK/GMAT, lower level tool
           ---
           ## More on SpiceyPy
           * ctypes-based wrapper, 600+ functions from CSPICE
           * readthedocs at spiceypy.readthedocs.io
           * 99% code coverage, CI/CD since 2014
           * new cython submodule (2025)
-          * new emscripten distribution (2026) thanks to PEP 783
+          * new emscripten distribution (2026) thanks to PEP 783 (more on this later)
 
+          ---
+          ## Even more on SpiceyPy
+          * custom cmake script for CSPICE shared library
+          * cython extension built against same shared library
+          * scikit-build-core backend to compile cspice
+          * cibuildwheel in ci runners
+          * github actions workflow and conda-forge for ci/cd
+          * readthedocs and codecov
+          * lots and lots of pytests, at least one per function
           ---
           ## SpiceyPy, live in your browser
 
           * slide deck uses pyodide via pyscript
+          * this is actual python code and emscripten compiled CSPICE running client side
           ```python
           import spiceypy as spice
           print(spice.tkvrsn("TOOLKIT"))
           ```
+          ---
+          ## Emscripten? WASM? Pyodide? PEP 783? Wat?
+
+          * Emscripten: compiler toolchain that compiles c/c++ to Wasm/js
+          * Wasm: portable binary code your browser can run
+          * Pyodide: CPython distribution/interpreter compiled to Wasm
+          * PEP 783: pyemscripten tag added for binary Wasm pyodide packages
+
+          With PEP 783 we can host Wasm python wheels on pypi and pip install in the browser!
+
           ---
           <!-- .slide: id="cassini" -->
           ## Demo: Cassini at Saturn
@@ -191,21 +211,22 @@
           ])
           print(f'Loaded {spice.ktotal("ALL")} kernels')
           ```
+          #### furnsh loads kernel files into the kernel pool to populate state info
           <!-- .element: data-env="cass" -->
           ---
           ## Pick a time range
           Convert UTC strings to ephemeris time (seconds past J2000 TDB):
           ```python
-          etOne = spice.str2et("Jun 20, 2004")
-          etTwo = spice.str2et("Dec 1, 2005")
-          print(f"ET One: {etOne}, ET Two: {etTwo}")
+          et_one = spice.str2et("Jun 20, 2004")
+          et_two = spice.str2et("Dec 1, 2005")
+          print(f"ET One: {et_one}, ET Two: {et_two}")
           ```
+          #### str2et converts various string time inputs to double precision time in Barycentric Dynamical Time (TDB) seconds past J2000 epoch
           <!-- .element: data-env="cass" -->
           ---
-          ## Sample 4000 times
+          ## Sample 4000 times (just numpy)
           ```python
-          step = 4000
-          times = [x * (etTwo - etOne) / step + etOne for x in range(step)]
+          times = np.linspace(et_one, et_two, 4000)
           print(times[0:3])
           ```
           <!-- .element: data-env="cass" -->
@@ -213,12 +234,13 @@
           ## Where was Cassini?
           `spkpos` is vectorized over times — one call, 4000 positions:
           ```python
-          positions, lightTimes = spice.spkpos(
+          positions, light_times = spice.spkpos(
               "Cassini", times, "J2000", "NONE", "SATURN BARYCENTER"
           )
           print("First position (km): ", positions[0])
-          print("First light time (s): ", lightTimes[0])
+          print("First light time (s): ", light_times[0])
           ```
+          #### spkpos returns the position of a target body relative to an observing body, optionally corrected for light time (planetary aberration) and stellar aberration.
           <!-- .element: data-env="cass" -->
           ---
           <!-- .slide: class="side-by-side" -->
@@ -232,16 +254,9 @@
           ax.set_title("Cassini, 2004 to 2005")
           display(fig, target="mpl", append=False)
           ```
+          #### kclear clears the kernel pool (previous commands if run again would fail)
           <!-- .element: data-env="cass" -->
           <div id="mpl"></div>
-          ---
-          <!-- .slide: class="side-by-side" -->
-          ## Straight from the docs
-          Same example, same figure: the SpiceyPy docs show this pre-rendered
-          plot until you run the cell yourself.
-
-          <img crossorigin="anonymous" alt="Cassini trajectory plot from the SpiceyPy docs" src="https://spiceypy.readthedocs.io/en/main/_images/exampleoneplot_min.png">
-
           ---
           <!-- .slide: id="m20" -->
           ## Demo: Mars Perseverance Rover Three Forks Sample Depo
@@ -249,13 +264,14 @@
 
           ---
           ## Load Kernels
+          * this may take a few seconds, kernels download in the background...
           ```python
           import numpy as np
           import matplotlib
           matplotlib.use("AGG")
           import matplotlib.pyplot as plt
           from pyscript import display
-          import spiceypy
+          import spiceypy as spice
           print('ready!')
           ```
           <!-- .element: data-env="m20" data-config="./pyscript_m20.json" -->
@@ -265,24 +281,27 @@
           import os
           # metakernel PATH_VALUES are relative to the working directory
           if os.path.isdir('m20_three_forks_demo'): os.chdir('m20_three_forks_demo')
-          spiceypy.furnsh('m2020_v16_221216_230201.tm')
-          print(f"We loaded {spiceypy.ktotal('ALL')} Kernel files")
-          sol_648 = spiceypy.str2et('2022-12-16')
-          sol_693 = spiceypy.str2et('2023-01-31')
+          # load the metakernel
+          spice.furnsh('m2020_v16_221216_230201.tm')
+          print(f"We loaded {spice.ktotal('ALL')} Kernel files")
+          sol_648 = spice.str2et('2022-12-16')
+          sol_693 = spice.str2et('2023-01-31')
           times = np.linspace(sol_648, sol_693, num=45*24*20, endpoint=True)
           print(f"Sampling {len(times)} over 45 sols")
           ```
+          #### metakernels are text based kernels containing lists of other kernels
           <!-- .element: data-env="m20" -->
           ---
           ## grab the positions
           ```python
-          positions, lttimes = spiceypy.spkpos("M2020", times, "IAU_MARS", "lt+s", "MARS")
+          positions, lttimes = spice.spkpos("M2020", times, "IAU_MARS", "lt+s", "MARS")
           print(f"Successfully grabbed {len(positions)} positions in IAU_MARS frame.")
           # convert from rectangular to latitudinal coordinates (in radians).
-          r, lon, lat = np.array([spiceypy.reclat(p) for p in positions]).T
+          r, lon, lat = np.array([spice.reclat(p) for p in positions]).T
           # convert to degrees
           lon, lat = np.degrees(lon), np.degrees(lat)
           ```
+          #### reclat converts points from cartesian coordinates to longitude, latitude, and radius
           <!-- .element: data-env="m20" -->
           ---
           <!-- .slide: class="side-by-side" -->
@@ -316,12 +335,12 @@
           # HiRISE mosaic: web-mercator TMS tiles (rows count from the bottom)
           folium.TileLayer(tiles, attr='NASA/JPL/Caltech/UofA', name='HiRISE',
                            tms=True, max_native_zoom=19, max_zoom=21).add_to(m)
-          utc_times = spiceypy.et2utc(times, 'C', 0)
+          utc_times = spice.et2utc(times, 'C', 0)
           folium.PolyLine(list(zip(lat, lon)), color='green').add_to(m)
           for la, lo, t in list(zip(lat, lon, utc_times))[::50]:
                 folium.Marker((la, lo), tooltip=t).add_to(m)
           folium.LayerControl().add_to(m)
-          spiceypy.kclear()  # tidy the kernel pool
+          spice.kclear()  # tidy the kernel pool
           display(m, target="folium_m20", append=False)
           ```
           <!-- .element: data-env="m20" -->
@@ -357,6 +376,7 @@
               "TKFRAME_1399901_AXES = (3, 2, 3)",
               f"TKFRAME_1399901_ANGLES = ({-lon}, {lat - 90}, 180)",
           ])
+          #### boddef defines a body name/int id code pair, lmpool loads strings directly into kernel pool
           ```
           <!-- .element: data-env="eclipse" -->
           ---
@@ -374,6 +394,7 @@
           spice.spkcls(handle)
           spice.furnsh('santa_monica.bsp')
           ```
+          #### write a spk08 kernel for santa monica betweeen 2030 and 2034
           <!-- .element: data-env="eclipse" -->
           ---
           ## When is the Moon near the Sun?
@@ -414,6 +435,8 @@
               start, end = [t.astimezone(pacific) for t in times]
               print(f'{start:%a %b %d %Y, %I:%M %p} to {end:%I:%M %p %Z}')
           ```
+          #### gfposc: determine time intervals for which a coordinate of an observer-target position vector satisfies a numerical constraint.
+
           <!-- .element: data-env="eclipse" -->
           ---
           <!-- .slide: class="side-by-side refs-slide" -->
