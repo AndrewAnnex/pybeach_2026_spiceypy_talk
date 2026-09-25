@@ -165,6 +165,7 @@
           import spiceypy as spice
           print(spice.tkvrsn("TOOLKIT"))
           ```
+          #### tkvrsn returns the version string of the CSPICE toolkit
           ---
           ## Emscripten? WASM? Pyodide? PEP 783? Wat?
 
@@ -211,8 +212,8 @@
           ])
           print(f'Loaded {spice.ktotal("ALL")} kernels')
           ```
-          #### furnsh loads kernel files into the kernel pool to populate state info
           <!-- .element: data-env="cass" -->
+          #### furnsh loads kernel files into the kernel pool to populate state info
           ---
           ## Pick a time range
           Convert UTC strings to ephemeris time (seconds past J2000 TDB):
@@ -221,8 +222,8 @@
           et_two = spice.str2et("Dec 1, 2005")
           print(f"ET One: {et_one}, ET Two: {et_two}")
           ```
-          #### str2et converts various string time inputs to double precision time in Barycentric Dynamical Time (TDB) seconds past J2000 epoch
           <!-- .element: data-env="cass" -->
+          #### str2et converts various string time inputs to double precision time in Barycentric Dynamical Time (TDB) seconds past J2000 epoch
           ---
           ## Sample 4000 times (just numpy)
           ```python
@@ -240,8 +241,8 @@
           print("First position (km): ", positions[0])
           print("First light time (s): ", light_times[0])
           ```
-          #### spkpos returns the position of a target body relative to an observing body, optionally corrected for light time (planetary aberration) and stellar aberration.
           <!-- .element: data-env="cass" -->
+          #### spkpos returns the position of a target body relative to an observing body, optionally corrected for light time (planetary aberration) and stellar aberration.
           ---
           <!-- .slide: class="side-by-side" -->
           ## Plot the trajectory
@@ -254,9 +255,11 @@
           ax.set_title("Cassini, 2004 to 2005")
           display(fig, target="mpl", append=False)
           ```
-          #### kclear clears the kernel pool (previous commands if run again would fail)
           <!-- .element: data-env="cass" -->
           <div id="mpl"></div>
+
+          #### kclear clears the kernel pool (previous commands if run again would fail)
+          <!-- .element: class="full-width" -->
           ---
           <!-- .slide: id="m20" -->
           ## Demo: Mars Perseverance Rover Three Forks Sample Depo
@@ -289,8 +292,8 @@
           times = np.linspace(sol_648, sol_693, num=45*24*20, endpoint=True)
           print(f"Sampling {len(times)} over 45 sols")
           ```
-          #### metakernels are text based kernels containing lists of other kernels
           <!-- .element: data-env="m20" -->
+          #### metakernels are text based kernels containing lists of other kernels
           ---
           ## grab the positions
           ```python
@@ -301,8 +304,8 @@
           # convert to degrees
           lon, lat = np.degrees(lon), np.degrees(lat)
           ```
-          #### reclat converts points from cartesian coordinates to longitude, latitude, and radius
           <!-- .element: data-env="m20" -->
+          #### reclat converts points from cartesian coordinates to longitude, latitude, and radius
           ---
           <!-- .slide: class="side-by-side" -->
           ## Plot the Rover's Traverse
@@ -345,6 +348,9 @@
           ```
           <!-- .element: data-env="m20" -->
           <div id="folium_m20"></div>
+
+          #### et2utc converts ephemeris time to UTC strings
+          <!-- .element: class="full-width" -->
           ---
           <!-- .slide: id="eclipse" -->
           ## Demo: Eclipses over Santa Monica
@@ -376,9 +382,9 @@
               "TKFRAME_1399901_AXES = (3, 2, 3)",
               f"TKFRAME_1399901_ANGLES = ({-lon}, {lat - 90}, 180)",
           ])
-          #### boddef defines a body name/int id code pair, lmpool loads strings directly into kernel pool
           ```
           <!-- .element: data-env="eclipse" -->
+          #### boddef defines a body name/int id code pair, lmpool loads strings directly into kernel pool
           ---
           ## ...and an SPK for where it is
           Write the site's position on the Earth's ellipsoid into a new SPK file:
@@ -394,8 +400,8 @@
           spice.spkcls(handle)
           spice.furnsh('santa_monica.bsp')
           ```
-          #### write a spk08 kernel for santa monica betweeen 2030 and 2034
           <!-- .element: data-env="eclipse" -->
+          #### georec converts geodetic lon/lat/alt to rectangular coordinates, spkw08 writes a type 8 SPK segment: equally spaced states, Lagrange interpolated
           ---
           ## When is the Moon near the Sun?
           Search 2031 through 2033 for times the Moon is within 2° of the Sun:
@@ -409,6 +415,7 @@
           print(f'The Moon passes within 2° of the Sun {spice.wncard(close)} times')
           ```
           <!-- .element: data-env="eclipse" -->
+          #### gfsep finds time intervals when the angular separation of two bodies, seen from an observer, satisfies a relation
           ---
           ## When does the Moon block the Sun?
           Search only inside those windows, so this stays fast:
@@ -420,13 +427,15 @@
           print(f'{spice.wncard(eclipses)} eclipses, day or night')
           ```
           <!-- .element: data-env="eclipse" -->
+          #### gfoclt finds time intervals when an observer sees one body occult another ('ANY' = full, annular, or partial)
           ---
           ## ...while the Sun is up?
-          Elevation is latitude in Santa Monica's topocentric frame:
+          Elevation is latitude in Santa Monica's topocentric frame (+Z zenith, +X north):
           ```python
           from zoneinfo import ZoneInfo
           pacific = ZoneInfo('America/Los_Angeles')
           visible = spice.cell_double(1000)
+          # when the latitude > 0 with respect to santa monica the sun is above the horizon
           spice.gfposc('SUN', 'SANTA_MONICA_TOPO', 'LT+S', 'SANTA_MONICA',
                        'LATITUDINAL', 'LATITUDE', '>', 0.0, 0.0,
                        3600.0, 500, eclipses, visible)
@@ -435,9 +444,8 @@
               start, end = [t.astimezone(pacific) for t in times]
               print(f'{start:%a %b %d %Y, %I:%M %p} to {end:%I:%M %p %Z}')
           ```
-          #### gfposc: determine time intervals for which a coordinate of an observer-target position vector satisfies a numerical constraint.
-
           <!-- .element: data-env="eclipse" -->
+          #### gfposc finds when one coordinate of an observer-target vector meets a constraint
           ---
           <!-- .slide: class="side-by-side refs-slide" -->
           ## When is each eclipse deepest?
