@@ -8,7 +8,19 @@
     <script src="mini-coi.js"></script>
     <link rel="stylesheet" href="https://pyscript.net/releases/2026.7.3/core.css" />
     <script type="module" src="https://pyscript.net/releases/2026.7.3/core.js"></script>
+    <!-- spice-replay viewer (three.js, built from ../spice_replay/web): defines window.SpiceReplay -->
+    <script src="js/spice-replay.min.js"></script>
     <style>
+      /* the replay viewer fills its slide; it paints its own black background and control bar */
+      .replay-slide #replay { width: 100%; height: 600px; }
+      .replay-slide .cred-star { font-size: 0.5em; vertical-align: super; opacity: .6; }
+      .replay-slide .cred-note { font-size: 0.4em; opacity: .55; margin: 4px 0 0; text-align: right; }
+      .credits-slide .refs { font-size: 0.5em; text-align: left; overflow-wrap: anywhere; }
+      .credits-slide .refs ul { margin: 0.4em 0; }
+      .credits-slide .refs li { margin-bottom: 0.25em; }
+      .credits-slide .refs .disclaimer { margin: 0.6em 0 0; opacity: .6; }
+      .replay-slide h2 { margin-bottom: 8px; }
+
       /* keep the PyScript editor readable inside reveal's themed slides */
       .pyscript-demo { text-align: left; font-size: 0.6em; max-width: 900px; margin-inline: auto; }
       /* CodeMirror sits in a shadow root on this div and resets to 16px, so the
@@ -261,6 +273,63 @@
           #### kclear clears the kernel pool (previous commands if run again would fail)
           <!-- .element: class="full-width" -->
           ---
+          <!-- .slide: id="replay-demo" -->
+          ## Demo: replaying the E8 flyby in 3D
+          Two hours of the real E8 flyby.
+          ```python
+          import json, os
+          import numpy as np
+          import spiceypy as spice
+          import spice_replay
+          os.chdir("cassini_flyby")
+          spice.furnsh("cas_2009_v21_091121_091121.tm")
+          events = json.loads(open("events.json").read())
+          print(f'{spice.ktotal("ALL")} kernels, {len(events["frames"])} ISS NAC frames')
+          ```
+          <!-- .element: data-env="replay" data-config="./pyscript_replay.json" -->
+          #### every number the 3D view is about to use comes from these kernels, computed here in the browser
+          ---
+          ## Where was Cassini?
+          ```python
+          et0 = spice.str2et("2009-11-21T01:00:00")
+          et1 = spice.str2et("2009-11-21T03:00:00")
+          times = np.arange(et0, et1, 60.0)
+          states, lts = spice.spkezr("CASSINI", times, "J2000", "NONE", "ENCELADUS")
+          print("position km  ", states[0][:3])
+          print("velocity km/s", states[0][3:])
+          ```
+          <!-- .element: data-env="replay" -->
+          #### spkezr returns velocity as well as position, which is what lets the viewer draw smooth motion between 60 second samples
+          ---
+          ## Which way was it facing?
+          ```python
+          m = spice.pxform("CASSINI_SC_COORD", "J2000", times[0])
+          print("quaternion", spice.m2q(m))
+          shape, frame, bsight, n, bounds = spice.getfov(spice.bods2c("CASSINI_ISS_NAC"), 4)
+          print(f"{shape} FOV in {frame}, boresight {bsight}")
+          ```
+          <!-- .element: data-env="replay" -->
+          #### pxform is the rotation between two frames at an epoch and m2q turns it into a quaternion; getfov gives the boresight and the corner vectors that become the frustum
+          ---
+          ## Hand it to the browser
+          ```python
+          from pyscript import window
+          payload = spice_replay.build(
+              events=events, start="2009-11-21T01:00:00", stop="2009-11-21T03:00:00",
+              center="ENCELADUS", bodies=["ENCELADUS", "SATURN"],
+              spacecraft="CASSINI", spacecraft_frame="CASSINI_SC_COORD",
+              instruments=["CASSINI_ISS_NAC"],
+          )
+          print(window.showReplay(json.dumps(payload)))
+          ```
+          <!-- .element: data-env="replay" -->
+          #### build runs the last two slides' calls across the whole window and packs the result as JSON; the viewer interpolates between the samples
+          ---
+          <!-- .slide: class="replay-slide" -->
+          ## 2009-11-21: Enceladus, E8 Cassini flyby <span class="cred-star">*</span>
+          <div id="replay"></div>
+          <p class="cred-note">* kernels, imagery and models credited on the last slide</p>
+          ---
           <!-- .slide: id="m20" -->
           ## Demo: Mars Perseverance Rover Three Forks Sample Depo
 
@@ -477,6 +546,21 @@
           - Questions?
 
           www.andrewannex.com
+          ---
+          <!-- .slide: class="credits-slide" -->
+          ## Credits
+          <div class="refs">Kernels, imagery and 3D models used in these demos, in full in
+            <a href="https://github.com/AndrewAnnex/pybeach_2026_spiceypy_talk/blob/main/CREDITS.md">CREDITS.md</a>
+            <ul>
+              <li><b>SPICE kernels</b> — NAIF/JPL PDS archives (public domain), sliced to each demo's time window</li>
+              <li><b>Cassini ISS NAC frames</b> — loaded live from OPUS, PDS Ring-Moon Systems Node. NASA / JPL-Caltech / Space Science Institute</li>
+              <li><b>Enceladus mosaic</b> — USGS Astrogeology, Cassini ISS, Schenk (2024). NASA / JPL-Caltech / SSI / USGS</li>
+              <li><b>Mars basemap</b> — HiRISE/CTX mosaic via NASA Trek MMGIS. NASA / JPL-Caltech / UArizona / USGS</li>
+              <li><b>Cassini-Huygens and Saturn models</b> — NASA 3D Resources and NASA Science. NASA</li>
+              <li><b>Software</b> — SpiceyPy, CSPICE (NAIF), PyScript, Pyodide, reveal.js, three.js</li>
+            </ul>
+            <p class="disclaimer">NAIF, NASA, ESA and the USGS do not endorse this talk.</p>
+          </div>
 
         </textarea>
       </section>
@@ -615,6 +699,27 @@
         const btn = e.target.closest?.('.py-editor-run-button');
         if (btn) btn.closest('.py-editor-box').dataset.ran = '1';
       }, true);
+      // The one call the Python cell makes. Every viewer option lives here rather than in the slide
+      // markdown, so the cell stays a single line. Called from the PyScript WORKER via pyscript's
+      // `window` proxy, which needs SharedArrayBuffer -> cross-origin isolation -> mini-coi.js.
+      window.showReplay = json => {
+        window.__replay = SpiceReplay.load('replay', json, {
+          cameraMode: 'instrument',
+          // reveal CSS-scales the slide, so the canvas has to be told the real device pixel count
+          pixelRatio: () => window.devicePixelRatio * (Reveal.getScale?.() ?? 1),
+          // cas_iss_v10.ti: "samples and lines increase with decreasing X and Y"
+          imageAxes: { CASSINI_ISS_NAC: { right: '-X', down: '-Y' } },
+          bodyTextures: { ENCELADUS: { url: 'assets/textures/enceladus_cassini_mosaic_global_100m_schenk2024_600m.jpg',
+                                       longitudeAtLeft: 0, positiveEast: true } },
+          bodyModels: { SATURN: { url: 'assets/models/saturn_1_120536.usdz', scale: 60268 / 64.353,
+                                  axes: { x: '+X', y: '+Z', z: '-Y' } } },
+          models: { CASSINI: { url: 'assets/models/cassini-huygens-b.nodraco.glb', scale: 2.07e-4,
+                               axes: { x: '+Y', y: '+X', z: '-Z' },
+                               instruments: { CASSINI_ISS_NAC: [-2.81, 8.03, 7.08] }, minPixels: 90 } },
+        });
+        return `${(json.length / 1e3).toFixed(0)} kB of telemetry loaded`;
+      };
+
       Reveal.initialize({
         plugins: [RevealMarkdown, PyScriptPromote, RevealHighlight],
         hash: true,
@@ -630,6 +735,8 @@
           },
         },
       });
+      // the div is 0x0 until its slide is the current one, so re-size the canvas on arrival
+      Reveal.on('slidechanged', () => window.__replay?.resize());
     </script>
   </body>
 </html>

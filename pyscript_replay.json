@@ -1,0 +1,22 @@
+{
+    "packages": [
+        "numpy",
+        "spiceypy"
+    ],
+    "files": {
+        "./py/spice_replay.py": "spice_replay.py",
+        "./kernels/cassini_flyby/cas_2009_v21_091121_091121.tm": "cassini_flyby/cas_2009_v21_091121_091121.tm",
+        "./kernels/cassini_flyby/events.json": "cassini_flyby/events.json",
+        "./kernels/cassini_flyby/spice_kernels/ck/09317_09356py_as_flown.bc": "cassini_flyby/spice_kernels/ck/09317_09356py_as_flown.bc",
+        "./kernels/cassini_flyby/spice_kernels/ck/09321_09326ra.bc": "cassini_flyby/spice_kernels/ck/09321_09326ra.bc",
+        "./kernels/cassini_flyby/spice_kernels/fk/cas_dyn_v03.tf": "cassini_flyby/spice_kernels/fk/cas_dyn_v03.tf",
+        "./kernels/cassini_flyby/spice_kernels/fk/cas_v44.tf": "cassini_flyby/spice_kernels/fk/cas_v44.tf",
+        "./kernels/cassini_flyby/spice_kernels/ik/cas_iss_v10.ti": "cassini_flyby/spice_kernels/ik/cas_iss_v10.ti",
+        "./kernels/cassini_flyby/spice_kernels/lsk/naif0012.tls": "cassini_flyby/spice_kernels/lsk/naif0012.tls",
+        "./kernels/cassini_flyby/spice_kernels/pck/enceladus_ssd_250728_v2.tpc": "cassini_flyby/spice_kernels/pck/enceladus_ssd_250728_v2.tpc",
+        "./kernels/cassini_flyby/spice_kernels/pck/pck00010.tpc": "cassini_flyby/spice_kernels/pck/pck00010.tpc",
+        "./kernels/cassini_flyby/spice_kernels/sclk/cas00172.tsc": "cassini_flyby/spice_kernels/sclk/cas00172.tsc",
+        "./kernels/cassini_flyby/spice_kernels/spk/200128RU_SCPSE_09296_09334.bsp": "cassini_flyby/spice_kernels/spk/200128RU_SCPSE_09296_09334.bsp",
+        "./kernels/cassini_flyby/spice_kernels/spk/sat427.bsp": "cassini_flyby/spice_kernels/spk/sat427.bsp"
+    }
+}
