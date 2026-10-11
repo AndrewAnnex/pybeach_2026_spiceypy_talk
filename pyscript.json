@@ -1,5 +1,5 @@
 {
     "packages": [
-        "spiceypy"
+        "spiceypy==8.3.0"
     ]
 }

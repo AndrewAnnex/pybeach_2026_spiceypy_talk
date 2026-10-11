@@ -3,7 +3,7 @@
         "numpy",
         "matplotlib",
         "folium",
-        "spiceypy"
+        "spiceypy==8.3.0"
     ],
     "files": {
         "https://raw.githubusercontent.com/AndrewAnnex/spiceypylessonkernels/refs/heads/main/m20_three_forks_demo/m2020_v16_221216_230201.tm": "m20_three_forks_demo/m2020_v16_221216_230201.tm",

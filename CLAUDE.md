@@ -14,10 +14,12 @@ Sphinx extension) — consult those when adding examples.
   in this folder. `mini-coi.js` is a service-worker shim that fakes the
   cross-origin-isolation headers PyScript's worker needs; expect one automatic
   page reload on first visit while it installs.
-- First click of Run in each env downloads pyodide + packages (the `cass` env
-  also fetches matplotlib and 8 subset SPICE kernels) — on the order of a
-  minute. When presenting, start the Cassini "Setup" cell early; navigation
+- First click of Run in each env downloads pyodide + packages (the `m20` env
+  also fetches matplotlib, folium and 20 subset SPICE kernels) — on the order of
+  a minute. When presenting, start the M20 "Setup" cell early; navigation
   isn't blocked while a cell runs.
+- Talk slot is 25 minutes; demo order is M20 (simplest visual) → Cassini E8
+  replay → Santa Monica eclipses.
 - Editors sharing an env share one interpreter, so state (imports, `times`,
   `positions`) carries across slides — cells must be run in slide order.
 
@@ -34,14 +36,18 @@ context, so the live cells break on plain http.
 ## Files
 
 - `pyscript.json` — config for the default `demo` env (just spiceypy, from PyPI;
-  needs spiceypy >= 8.1.2 for the pyodide wheel).
+  needs spiceypy >= 8.1.2 for the pyodide wheel). All the deck's configs pin
+  `spiceypy==8.3.0` (cp314 `pyemscripten_2026_0` wheel) so the talk can't drift to
+  a new release; bump all four together, then re-run the headless check.
 - `pyscript_replay.json` — config for the `replay` env (numpy + spiceypy, the `cassini_flyby`
   kernel bundle, and `py/spice_replay.py`). Unlike the other configs its URLs are **relative**
   (`./kernels/...`), not raw.githubusercontent: same-origin means it works locally before anything is
   pushed, and sidesteps the COEP traps below. Prefer this style for new demos.
-- `pyscript_cassini.json` — config for the `cass` env: numpy, matplotlib,
-  spiceypy, plus kernel files fetched from the AndrewAnnex/spiceypylessonkernels
-  GitHub repo into the browser FS (copied from the docs' cassini example config).
+- `pyscript_cassini.json` — UNUSED since the matplotlib Cassini demo was cut
+  for time (its intro now opens the replay demo; its furnsh/str2et/spkpos
+  explainers moved to the M20 demo, where those functions are now first used).
+  Was the `cass` env: numpy, matplotlib, spiceypy, plus kernels fetched from the
+  AndrewAnnex/spiceypylessonkernels GitHub repo (copied from the docs' cassini example).
 - `mini-coi.js` — COI service-worker shim, originally copied from `../SpiceyPy/docs/`
   but PATCHED (don't overwrite it with the docs copy): COEP is `credentialless`
   instead of `require-corp`, and the worker skips cross-origin `no-cors` requests.
@@ -170,7 +176,7 @@ fifth slide is the viewer. Built from `../spice_replay` (see its README); the pi
   MutationObserver — scripts added post-load work fine (browsers never execute
   custom-type scripts natively, so innerHTML/createElement injection is safe).
 - Plot cells use `matplotlib.use("AGG")` + `from pyscript import display` +
-  `display(fig, target="mpl", append=False)` into a `<div id="mpl">` on the
+  `display(fig, target="mplm20", append=False)` into a `<div id="mplm20">` on the
   slide (same pattern as the docs).
 
 ## Verifying changes
@@ -196,9 +202,19 @@ http server for this folder, then drive the deck. Gotchas learned:
   set and a canvas in `#replay`. About 12 s of cell time once the env is warm.
   NOTE: PyScript upgrades a promoted `<script type="py-editor">` asynchronously — poll for
   `.py-editor-box` before clicking Run, or the first cell looks like it has no editor.
-- Known-good outputs to assert, in slide order: `hello`; `CSPICE_N0067`;
-  Cassini env: `SpiceyPy for CSPICE_N0067 ready!`, `Loaded 8 kernels`,
-  `ET One: 140961664.18440723, ET Two: 186667264.18308285`,
-  `[140961664.18440723, ...`, first position
-  `[-5461446.61080924 -4434793.40785864 -1200385.93315424]`, and an `<img>`
-  appearing in `#mpl`. Full pipeline (cold caches) takes ~3–5 min headless.
+- Known-good outputs to assert, in slide order: `CSPICE_N0067`;
+  M20 env: `ready!`, `We loaded 20 Kernel files`, `Sampling 21600 times over 45 sols`,
+  `Successfully grabbed 21600 positions in IAU_MARS frame.`, an `<img>` in `#mplm20`,
+  and the folium map in `#folium_m20`; then the replay env (above); eclipse env:
+  `Loaded 3 kernels`, then (searching from 2026-10-11; the search starts at the
+  browser's current time, so these two counts shrink as dates pass)
+  `The Moon passes within 2° of the Sun 31 times`, `7 eclipses, day or night`;
+  visible: `Sun Jan 14 2029, 07:07 AM to 09:44 AM PST`, `Fri Nov 14 2031, 01:01 PM
+  to 02:12 PM PST`, `Wed Mar 30 2033, 09:25 AM to 11:19 AM PDT`; last cell
+  `Next one peaks Sun Jan 14 2029 at 08:21 AM PST`. Full pipeline (cold caches)
+  takes ~3–5 min headless.
+- Eclipse demo kernels: `de438s_2026_2033.bsp` is an `spkmerge` cut of NAIF's
+  `de438s.bsp` (BODIES 3, 10, 301, 399; 2026 OCT 01 .. 2034 JAN 02 TDB). The site
+  SPK written by the demo must cover the same span. The hook slide (right after the
+  title) promises the *next* eclipse, so the window must start before the talk.
+  Cross-checked against time.now (2029: 51.6% partial, 07:07–09:46 PST).
