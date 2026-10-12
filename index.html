@@ -11,6 +11,8 @@
     <!-- spice-replay viewer (three.js, built from ../spice_replay/web): defines window.SpiceReplay -->
     <script src="js/spice-replay.min.js"></script>
     <style>
+      /* explainer headings keep their typed case, so function names match the code (theme uppercases headings) */
+      .reveal h4 { text-transform: none; }
       /* the replay viewer fills its slide; it paints its own black background and control bar */
       .replay-slide #replay { width: 100%; height: 600px; }
       .replay-slide .cred-star { font-size: 0.5em; vertical-align: super; opacity: .6; }
@@ -41,6 +43,11 @@
       .side-by-side p, .side-by-side ul { text-align: left; }
       /* let an intro line span both columns, like the heading does */
       .side-by-side .full-width { grid-column: 1 / -1; }
+      /* take-home slide: a row of QR cards, each drawn from its link's href (see drawQRCodes) */
+      .thanks-slide .qr-row { display: flex; justify-content: center; gap: 56px; margin: 0.5em 0; }
+      .thanks-slide .qr { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 0.6em; }
+      .thanks-slide .qr svg { width: 210px; height: 210px; border-radius: 6px; }
+      .thanks-slide .qr-url { font-size: 0.55em; opacity: .7; }
       /* reference links column: smaller, wrapping, no bullets crowding the edge */
       .refs-slide .refs { font-size: 0.5em; text-align: left; overflow-wrap: anywhere; }
       .refs-slide .refs ul { margin: 0.3em 0 0; }
@@ -123,7 +130,7 @@
           ## What is SPICE (briefly)
           * Fortran Software Library for NASA scientists and engineers to work with Spacecraft and Planetary Ephemeris information
           * Ephemeris information is the positions and orientations of planets and spacecraft as a function of time.
-          * Includes instrument extrinsics (state info) and some intrinsics (focal lengths, coordinate reference frames etc)
+          * Also: where each instrument is mounted and points, plus camera details (focal lengths, fields of view)
 
           https://naif.jpl.nasa.gov/naif/spiceconcept.html
           ---
@@ -149,8 +156,8 @@
           ## How does SPICE work?
 
           * Ephemeris data stored in bespoke binary and ascii text files called "kernels"
-            - FK (frame kernel), IK (instrument kernel), LSK (leapseconds kernel)
-            - SPK (Spacecraft and Planet position kernel), PCK (Planetary orientation kernel), CK (camera pointing kernel)
+            - SPK: positions · CK: orientation · LSK: leap seconds
+            - PCK: planet shapes & rotation · FK / IK: frames & instruments
           * Loads state into kernel pool
             - functionally an in-memory time & kv database
 
@@ -193,7 +200,7 @@
           import spiceypy as spice
           print(spice.tkvrsn("TOOLKIT"))
           ```
-          #### tkvrsn returns the version string of the CSPICE toolkit
+          #### tkvrsn: which CSPICE version is running?
           ---
           ## Emscripten? WASM? Pyodide? PEP 783? Wat?
 
@@ -233,8 +240,7 @@
           print(f"We loaded {spice.ktotal('ALL')} Kernel files")
           ```
           <!-- .element: data-env="m20" -->
-          #### furnsh loads kernel files into the kernel pool to populate state info
-          #### metakernels are text based kernels containing lists of other kernels
+          #### furnsh loads kernels; a metakernel is a list of kernels to load
           ---
           ## Define start and end dates and sample points
           ```python
@@ -244,7 +250,7 @@
           print(f"Sampling {len(times)} times over 45 sols")
           ```
           <!-- .element: data-env="m20" -->
-          #### str2et converts various string time inputs to double precision time in Barycentric Dynamical Time (TDB) seconds past J2000 epoch
+          #### str2et: date string → seconds past J2000 (TDB), leap seconds included
           ---
           ## Grab the positions
           `spkpos` is vectorized over times — one call, 21,600 positions:
@@ -257,7 +263,7 @@
           lon, lat = np.degrees(lon), np.degrees(lat)
           ```
           <!-- .element: data-env="m20" -->
-          #### spkpos returns the position of a target body relative to an observing body, optionally corrected for light time and stellar aberration; reclat converts x, y, z to radius, longitude, latitude
+          #### spkpos: where is the target, seen from the observer? reclat: x, y, z → lon, lat
           ---
           <!-- .slide: class="side-by-side" -->
           ## Plot the Rover's Traverse
@@ -323,7 +329,7 @@
           print(f'{spice.ktotal("ALL")} kernels, {len(events["frames"])} ISS NAC frames')
           ```
           <!-- .element: data-env="replay" data-config="./pyscript_replay.json" -->
-          #### every number the 3D view is about to use comes from these kernels, computed here in the browser
+          #### every number in the 3D view is computed from these kernels
           ---
           ## Where was Cassini?
           ```python
@@ -335,7 +341,7 @@
           print("velocity km/s", states[0][3:])
           ```
           <!-- .element: data-env="replay" -->
-          #### spkezr returns velocity as well as position, which is what lets the viewer draw smooth motion between 60 second samples
+          #### spkezr: position + velocity, for smooth motion between samples
           ---
           ## Which way was it facing?
           ```python
@@ -345,7 +351,7 @@
           print(f"{shape} FOV in {frame}, boresight {bsight}")
           ```
           <!-- .element: data-env="replay" -->
-          #### pxform is the rotation between two frames at an epoch and m2q turns it into a quaternion; getfov gives the boresight and the corner vectors that become the frustum
+          #### pxform + m2q: which way Cassini points; getfov: what its camera sees
           ---
           ## Hand it to the browser
           ```python
@@ -359,7 +365,7 @@
           print(window.showReplay(json.dumps(payload)))
           ```
           <!-- .element: data-env="replay" -->
-          #### build runs the last two slides' calls across the whole window and packs the result as JSON; the viewer interpolates between the samples
+          #### build: the same calls over the whole flyby, packed as JSON
           ---
           <!-- .slide: class="replay-slide" -->
           ## 2009-11-21: Enceladus, E8 Cassini flyby <span class="cred-star">*</span>
@@ -398,7 +404,7 @@
           ])
           ```
           <!-- .element: data-env="eclipse" -->
-          #### boddef defines a body name/int id code pair, lmpool loads strings directly into kernel pool
+          #### boddef: name a new body; lmpool: define its frame from strings
           ---
           ## ...and an SPK for where it is
           Write the site's position on the Earth's ellipsoid into a new SPK file:
@@ -415,7 +421,7 @@
           spice.furnsh('santa_monica.bsp')
           ```
           <!-- .element: data-env="eclipse" -->
-          #### georec converts geodetic lon/lat/alt to rectangular coordinates, spkw08 writes a type 8 SPK segment: equally spaced states, Lagrange interpolated
+          #### georec: lon, lat → x, y, z; spkw08: write our own SPK file
           ---
           ## When is the Moon near the Sun?
           Search from right now through 2033 for times the Moon is within 2° of the Sun:
@@ -431,7 +437,7 @@
           print(f'The Moon passes within 2° of the Sun {spice.wncard(close)} times')
           ```
           <!-- .element: data-env="eclipse" -->
-          #### gfsep finds time intervals when the angular separation of two bodies, seen from an observer, satisfies a relation
+          #### gfsep: when is the angle between two bodies < 2°?
           ---
           ## When does the Moon block the Sun?
           Search only inside those windows, so this stays fast:
@@ -443,7 +449,7 @@
           print(f'{spice.wncard(eclipses)} eclipses, day or night')
           ```
           <!-- .element: data-env="eclipse" -->
-          #### gfoclt finds time intervals when an observer sees one body occult another ('ANY' = full, annular, or partial)
+          #### gfoclt: when does one body block another?
           ---
           ## ...while the Sun is up?
           Elevation is latitude in the site's topocentric frame (+Z up, +X north):
@@ -461,7 +467,7 @@
               print(f'{start:%a %b %d %Y, %I:%M %p} to {end:%I:%M %p %Z}')
           ```
           <!-- .element: data-env="eclipse" -->
-          #### gfposc finds when one coordinate of an observer-target vector meets a constraint
+          #### gfposc: when does a coordinate meet a condition? (Sun elevation > 0°)
           ---
           <!-- .slide: class="side-by-side refs-slide" -->
           ## When is the next one deepest?
@@ -486,9 +492,16 @@
             </ul>
           </div>
           ---
+          <!-- .slide: class="thanks-slide" -->
           # Thanks For Listening!
+          Questions?
+          <div class="qr-row">
+            <a class="qr" href="https://andrewannex.com/pybeach_2026_spiceypy_talk/">Live slides</a>
+            <a class="qr" href="https://github.com/AndrewAnnex/pybeach_2026_spiceypy_talk/">Slide source</a>
+            <a class="qr" href="https://spiceypy.readthedocs.io/">SpiceyPy docs</a>
+          </div>
 
-          - Questions?
+          `pip install spiceypy` · `conda install spiceypy`
 
           www.andrewannex.com
           ---
@@ -513,6 +526,7 @@
     <script src="https://cdn.jsdelivr.net/npm/reveal.js/dist/reveal.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/reveal.js/plugin/markdown/markdown.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/reveal.js/plugin/highlight/highlight.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@2.0.4/dist/qrcode.js"></script>
     <script>
       // Promotes ```python fences to runnable PyScript editors. Runs between
       // RevealMarkdown (needs the rendered <pre><code>) and RevealHighlight
@@ -665,6 +679,20 @@
         return `${(json.length / 1e3).toFixed(0)} kB of telemetry loaded`;
       };
 
+      // each <a class="qr"> gets a QR code of its own href, so the code and the link can't disagree
+      function drawQRCodes() {
+        document.querySelectorAll('.reveal a.qr').forEach(a => {
+          const qr = qrcode(0, 'M');  // 0 = smallest version that fits the URL
+          qr.addData(a.href);
+          qr.make();
+          const label = a.textContent.trim();
+          const url = a.href.replace(/^https?:\/\//, '').replace(/\/$/, '');
+          a.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 16, scalable: true, title: label })
+            + `<span>${label}</span><span class="qr-url">${url}</span>`;
+        });
+        Reveal.layout();
+      }
+
       Reveal.initialize({
         plugins: [RevealMarkdown, PyScriptPromote, RevealHighlight],
         hash: true,
@@ -679,7 +707,7 @@
             else Reveal.next();
           },
         },
-      });
+      }).then(drawQRCodes);
       // the div is 0x0 until its slide is the current one, so re-size the canvas on arrival
       Reveal.on('slidechanged', () => window.__replay?.resize());
     </script>
