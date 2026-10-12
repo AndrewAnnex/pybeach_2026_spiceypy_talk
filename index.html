@@ -43,6 +43,22 @@
       .side-by-side p, .side-by-side ul { text-align: left; }
       /* let an intro line span both columns, like the heading does */
       .side-by-side .full-width { grid-column: 1 / -1; }
+      /* packaging story: pipeline diagram, wheel matrix, and the colour-coded wheel filename */
+      .pipeline-slide .pipeline { display: flex; align-items: stretch; justify-content: center; gap: 10px; margin: 1em 0; }
+      .pipeline-slide .stage { display: flex; flex-direction: column; justify-content: center; gap: 4px; padding: 14px 16px;
+                               border: 2px solid #75715e; border-radius: 8px; font-size: 0.6em; min-width: 150px; }
+      .pipeline-slide .stage span { font-size: 0.75em; opacity: .75; }
+      .pipeline-slide .stage.you { border-color: #a6e22e; }
+      .pipeline-slide .arrow { align-self: center; font-size: 0.9em; color: #75715e; }
+      .wheels-slide table { font-size: 0.5em; }
+      .wheels-slide ul { font-size: 0.7em; margin-top: 0.8em; }
+      .steal-slide ol { font-size: 0.85em; }
+      .wheels-slide code, .steal-slide code { font-size: 0.85em; }
+      .anatomy-slide .wheelname { font-family: var(--r-code-font); font-size: 0.62em; margin: 0.8em 0; white-space: nowrap; }
+      .anatomy-slide ul, .anatomy-slide p { font-size: 0.8em; }
+      .anatomy-slide .w-py { color: #e6db74; }
+      .anatomy-slide .w-plat { color: #f92672; }
+      .anatomy-slide .w-arch { color: #ae81ff; }
       /* take-home slide: a row of QR cards, each drawn from its link's href (see drawQRCodes) */
       .thanks-slide .qr-row { display: flex; justify-content: center; gap: 56px; margin: 0.5em 0; }
       .thanks-slide .qr { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 0.6em; }
@@ -174,23 +190,55 @@
           SPICE: any observer, any target, any frame, if there's a kernel for it
           not a mission-design tool like STK or NASA's GMAT; SPICE is lower level
           ---
-          ## More on SpiceyPy
-          * ctypes-based wrapper, 600+ functions from CSPICE
-          * readthedocs at spiceypy.readthedocs.io
-          * 99% code coverage, CI/CD since 2014
-          * new cython submodule (2025)
-          * new emscripten distribution (2026) thanks to PEP 783 (more on this later)
+          <!-- .slide: class="pipeline-slide" -->
+          ## From Fortran to `pip install`
+          <div class="pipeline">
+            <div class="stage"><b>Fortran 77</b><span>NAIF's SPICE, 1980s</span></div>
+            <div class="arrow">→</div>
+            <div class="stage"><b>f2c</b><span>machine-translated to C</span></div>
+            <div class="arrow">→</div>
+            <div class="stage"><b>CSPICE</b><span>~2,200 C files</span></div>
+            <div class="arrow">→</div>
+            <div class="stage"><b>shared library</b><span>built with CMake</span></div>
+            <div class="arrow">→</div>
+            <div class="stage you"><b>SpiceyPy</b><span>ctypes wrappers, since 2014</span></div>
+          </div>
 
+          * 600+ CSPICE functions wrapped, plus a Cython submodule (2025) on the same library
+          * docs on readthedocs, > 99% code coverage on codecov
           ---
-          ## Even more on SpiceyPy
-          
-          * custom cmake script for CSPICE shared library
-          * cython extension built against same shared library
-          * scikit-build-core backend to compile cspice
-          * cibuildwheel in ci runners
-          * github actions workflow and conda-forge for ci/cd
-          * readthedocs and codecov
-          * lots and lots of pytests, at least one per function
+          <!-- .slide: class="wheels-slide" -->
+          ## One release, 31 wheels
+          | | macOS x86-64 | macOS arm64 | Linux x86-64 | Linux aarch64 | Windows x86-64 | Browser (wasm32) |
+          |---|:-:|:-:|:-:|:-:|:-:|:-:|
+          | CPython 3.10 | ✓ | ✓ | ✓ | ✓ | ✓ |  |
+          | CPython 3.11 | ✓ | ✓ | ✓ | ✓ | ✓ |  |
+          | CPython 3.12 | ✓ | ✓ | ✓ | ✓ | ✓ |  |
+          | CPython 3.13 | ✓ | ✓ | ✓ | ✓ | ✓ |  |
+          | CPython 3.14 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+          | CPython 3.15 | ✓ | ✓ | ✓ | ✓ | ✓ |  |
+
+          * scikit-build-core runs CMake straight from `pyproject.toml`
+          * cibuildwheel builds the matrix on GitHub Actions, CSPICE compiled once per platform and vendored into each wheel
+          * also on conda-forge
+          ---
+          <!-- .slide: class="anatomy-slide" -->
+          ## Anatomy of a browser wheel
+          <div class="wheelname"><span class="w-pkg">spiceypy-8.3.0</span>-<span class="w-py">cp314-cp314</span>-<span class="w-plat">pyemscripten_2026_0</span>_<span class="w-arch">wasm32</span>.whl</div>
+
+          * <span class="w-py">cp314-cp314</span>: CPython 3.14, the Python inside Pyodide
+          * <span class="w-plat">pyemscripten_2026_0</span>: the PEP 783 platform tag, Pyodide's 2026 ABI
+          * <span class="w-arch">wasm32</span>: WebAssembly, binary code your browser runs
+          * Emscripten compiles C (CSPICE) to Wasm; Pyodide is CPython itself, compiled to Wasm
+
+          PEP 783 lets this wheel live on PyPI next to the other 30. The next slide installs it.
+          ---
+          <!-- .slide: class="steal-slide" -->
+          ## Steal this for your C-wrapper library
+          1. **Tests first**: at least one pytest per wrapped function, run against every wheel, even inside Pyodide. They proved each platform actually worked before shipping
+          2. **CMake + scikit-build-core** builds the C library, all driven from `pyproject.toml`
+          3. **cibuildwheel** for the platform matrix; `--platform pyodide` adds the browser wheel
+          4. **Build the C dependency once per platform**, not once per Python version
           ---
           ## SpiceyPy, live in your browser
 
@@ -201,16 +249,6 @@
           print(spice.tkvrsn("TOOLKIT"))
           ```
           #### tkvrsn: which CSPICE version is running?
-          ---
-          ## Emscripten? WASM? Pyodide? PEP 783? Wat?
-
-          * Emscripten: compiler toolchain that compiles c/c++ to Wasm/js
-          * Wasm: portable binary code your browser can run
-          * Pyodide: CPython distribution/interpreter compiled to Wasm
-          * PEP 783: pyemscripten tag added for binary Wasm pyodide packages
-
-          With PEP 783 we can host Wasm python wheels on pypi and pip install in the browser!
-
           ---
           <!-- .slide: id="m20" -->
           ## Demo: Mars Perseverance Rover Three Forks Sample Depot
@@ -378,7 +416,9 @@
           Load the Sun, Earth and Moon ephemeris from now through 2033:
           ```python
           import os
+          from zoneinfo import ZoneInfo
           import spiceypy as spice
+          pacific = ZoneInfo('America/Los_Angeles')
           spice.furnsh([
               'santa_monica_eclipse/lsk/naif0012.tls',
               'santa_monica_eclipse/pck/pck00010_sun_earth_moon.tpc',
@@ -440,13 +480,17 @@
           #### gfsep: when is the angle between two bodies < 2°?
           ---
           ## When does the Moon block the Sun?
-          Search only inside those windows, so this stays fast:
           ```python
           eclipses = spice.cell_double(1000)
+          # search only inside the gfsep windows (close), so this stays fast
           spice.gfoclt('ANY', 'MOON', 'ELLIPSOID', 'IAU_MOON',
                        'SUN', 'ELLIPSOID', 'IAU_SUN',
                        'LT', 'SANTA_MONICA', 180.0, close, eclipses)
-          print(f'{spice.wncard(eclipses)} eclipses, day or night')
+          # a window of [start, end] intervals; geometry only, so some are at night
+          for i in range(spice.wncard(eclipses)):
+              times = spice.et2datetime(spice.wnfetd(eclipses, i))
+              start, end = [t.astimezone(pacific) for t in times]
+              print(f'{start:%a %b %d %Y, %I:%M %p} to {end:%I:%M %p %Z}')
           ```
           <!-- .element: data-env="eclipse" -->
           #### gfoclt: when does one body block another?
@@ -454,10 +498,9 @@
           ## ...while the Sun is up?
           Elevation is latitude in the site's topocentric frame (+Z up, +X north):
           ```python
-          from zoneinfo import ZoneInfo
-          pacific = ZoneInfo('America/Los_Angeles')
           visible = spice.cell_double(1000)
           # when the latitude > 0 with respect to santa monica the sun is above the horizon
+          # cnfine = eclipses: search only inside them, so visible = eclipse AND Sun up
           spice.gfposc('SUN', 'SANTA_MONICA_TOPO', 'LT+S', 'SANTA_MONICA',
                        'LATITUDINAL', 'LATITUDE', '>', 0.0, 0.0,
                        3600.0, 500, eclipses, visible)
@@ -470,25 +513,27 @@
           #### gfposc: when does a coordinate meet a condition? (Sun elevation > 0°)
           ---
           <!-- .slide: class="side-by-side refs-slide" -->
-          ## When is the next one deepest?
+          ## When is each eclipse deepest?
           The peak is when the Sun and Moon are closest together:
           <!-- .element: class="full-width" -->
           ```python
-          eclipse = spice.cell_double(2)
-          spice.wninsd(*spice.wnfetd(visible, 0), eclipse)  # the first one found
-          peak = spice.cell_double(2)
-          spice.gfsep('MOON', 'SPHERE', 'IAU_MOON', 'SUN', 'SPHERE', 'IAU_SUN',
-                      'LT+S', 'SANTA_MONICA', 'ABSMIN', 0.0, 0.0,
-                      60.0, 1, eclipse, peak)
-          when = spice.et2datetime(spice.wnfetd(peak, 0)[0]).astimezone(pacific)
-          print(f'Next one peaks {when:%a %b %d %Y at %I:%M %p %Z}')
+          for i in range(spice.wncard(visible)):
+              eclipse = spice.cell_double(2)
+              spice.wninsd(*spice.wnfetd(visible, i), eclipse)
+              peak = spice.cell_double(2)
+              spice.gfsep('MOON', 'SPHERE', 'IAU_MOON', 'SUN', 'SPHERE', 'IAU_SUN',
+                          'LT+S', 'SANTA_MONICA', 'ABSMIN', 0.0, 0.0,
+                          60.0, 1, eclipse, peak)
+              when = spice.et2datetime(spice.wnfetd(peak, 0)[0]).astimezone(pacific)
+              print(f'peak at {when:%a %b %d %Y, %I:%M %p %Z}')
           spice.kclear()  # tidy the kernel pool
           ```
           <!-- .element: data-env="eclipse" -->
-          <div class="refs">compare to
+          <div class="refs">compare to (time.now max for LA, Sun covered)
             <ul>
-              <li><a href="https://time.now/los-angeles/eclipses/2029-01-14/">time.now: Jan 14, 2029 (51.6% of the Sun covered in LA)</a></li>
-              <li><a href="https://en.wikipedia.org/wiki/Solar_eclipse_of_January_14,_2029">Wikipedia: Jan 14, 2029</a></li>
+              <li>Jan 14, 2029: 8:20 AM, 51.6% (<a href="https://time.now/los-angeles/eclipses/2029-01-14/">time.now</a>, <a href="https://en.wikipedia.org/wiki/Solar_eclipse_of_January_14,_2029">Wikipedia</a>)</li>
+              <li>Nov 14, 2031: 1:40 PM, 2.6% (<a href="https://time.now/los-angeles/eclipses/2031-11-14/">time.now</a>, <a href="https://en.wikipedia.org/wiki/Solar_eclipse_of_November_14,_2031">Wikipedia</a>)</li>
+              <li>Mar 30, 2033: 10:20 AM, 26.3% (<a href="https://time.now/los-angeles/eclipses/2033-03-30/">time.now</a>, <a href="https://en.wikipedia.org/wiki/Solar_eclipse_of_March_30,_2033">Wikipedia</a>)</li>
             </ul>
           </div>
           ---

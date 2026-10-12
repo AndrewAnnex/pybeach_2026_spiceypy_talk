@@ -208,10 +208,12 @@ http server for this folder, then drive the deck. Gotchas learned:
   and the folium map in `#folium_m20`; then the replay env (above); eclipse env:
   `Loaded 3 kernels`, then (searching from 2026-10-11; the search starts at the
   browser's current time, so these two counts shrink as dates pass)
-  `The Moon passes within 2° of the Sun 31 times`, `7 eclipses, day or night`;
-  visible: `Sun Jan 14 2029, 07:07 AM to 09:44 AM PST`, `Fri Nov 14 2031, 01:01 PM
+  `The Moon passes within 2° of the Sun 31 times`; gfoclt prints all 7 eclipse windows,
+  day or night (first `Mon Aug 02 2027, 01:59 AM to 02:36 AM PDT`); gfposc keeps the
+  3 with the Sun up: `Sun Jan 14 2029, 07:07 AM to 09:44 AM PST`, `Fri Nov 14 2031, 01:01 PM
   to 02:12 PM PST`, `Wed Mar 30 2033, 09:25 AM to 11:19 AM PDT`; last cell
-  `Next one peaks Sun Jan 14 2029 at 08:21 AM PST`. Full pipeline (cold caches)
+  peaks `08:21 AM PST`, `01:37 PM PST`, `10:20 AM PDT`
+  (time.now max: 8:20 AM, 1:40 PM, 10:20 AM). Full pipeline (cold caches)
   takes ~3–5 min headless.
 - Eclipse demo kernels: `de438s_2026_2033.bsp` is an `spkmerge` cut of NAIF's
   `de438s.bsp` (BODIES 3, 10, 301, 399; 2026 OCT 01 .. 2034 JAN 02 TDB). The site
