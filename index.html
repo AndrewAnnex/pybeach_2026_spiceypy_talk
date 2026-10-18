@@ -50,15 +50,16 @@
       .pipeline-slide .stage span { font-size: 0.75em; opacity: .75; }
       .pipeline-slide .stage.you { border-color: #a6e22e; }
       .pipeline-slide .arrow { align-self: center; font-size: 0.9em; color: #75715e; }
-      .wheels-slide table { font-size: 0.5em; }
-      .wheels-slide ul { font-size: 0.7em; margin-top: 0.8em; }
+      .pipeline-slide table { font-size: 0.5em; }
+      .pipeline-slide ul { font-size: 0.65em; margin-top: 0.6em; }
       .steal-slide ol { font-size: 0.85em; }
-      .wheels-slide code, .steal-slide code { font-size: 0.85em; }
-      .anatomy-slide .wheelname { font-family: var(--r-code-font); font-size: 0.62em; margin: 0.8em 0; white-space: nowrap; }
-      .anatomy-slide ul, .anatomy-slide p { font-size: 0.8em; }
-      .anatomy-slide .w-py { color: #e6db74; }
-      .anatomy-slide .w-plat { color: #f92672; }
-      .anatomy-slide .w-arch { color: #ae81ff; }
+      .pipeline-slide code, .steal-slide code { font-size: 0.85em; }
+      .browser-slide .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; text-align: left; }
+      .browser-slide h3 { font-size: 0.75em; color: #a6e22e; margin-bottom: 0.3em; }
+      .browser-slide ul { font-size: 0.62em; margin: 0; }
+      .browser-slide li { margin-bottom: 0.3em; }
+      .browser-slide p { font-size: 0.6em; margin-top: 1em; }
+      .browser-slide code { font-size: 0.9em; }
       /* take-home slide: a row of QR cards, each drawn from its link's href (see drawQRCodes) */
       .thanks-slide .qr-row { display: flex; justify-content: center; gap: 56px; margin: 0.5em 0; }
       .thanks-slide .qr { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 0.6em; }
@@ -76,6 +77,14 @@
       /* images in a side-by-side slide; beats reveal's default img frame */
       .reveal .side-by-side img { max-height: 460px; max-width: 100%; margin: 0 auto; display: block;
                                   border: none; background: none; box-shadow: none; border-radius: 6px; }
+      /* an image with a small caption directly below it, kept in one grid cell */
+      .reveal figure.captioned { margin: 0; }
+      .reveal figure.captioned figcaption { font-size: 0.4em; opacity: .7; text-align: center; margin-top: 0.4em; }
+      .reveal .about-slide img { max-height: 400px; }  /* room for the caption and the www line */
+      /* even: equal columns for a side-by-side slide whose image needs the width */
+      .reveal .slides section.present.side-by-side.even { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+      .side-by-side.even > ul { font-size: 0.62em; }
+      .side-by-side.even .full-width { font-size: 0.5em; }
       /* star-history chart: equal columns, image fills its half (no max-height cap) */
       .reveal .slides section.present.side-by-side.star-slide { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
       .reveal .star-slide a { display: block; width: 100%; }
@@ -111,6 +120,7 @@
           Along the way: retrace Perseverance's drive on Mars, and replay Cassini's flyby of Enceladus in 3D.
           <!-- .element: class="fragment" -->
           ---
+          <!-- .slide: class="side-by-side about-slide" -->
           ## About Me
           * Planetary Scientist: Geology and Remote Sensing
           * Mars 2020 rover science operations team
@@ -118,7 +128,13 @@
           * Geospatial & CV software focus
           * (current) Senior Software Engineer @ Planet
 
+          <figure class="captioned">
+            <img alt="SpiceyPy in the credits of Worlds Beyond Earth at the Hayden Planetarium" src="images/spiceypy_hayden_pic.jpg" />
+            <figcaption>SpiceyPy in Worlds Beyond Earth Planetarium Show at the Hayden Planetarium, 2020</figcaption>
+          </figure>
+
           www.andrewannex.com
+          <!-- .element: class="full-width" -->
           ---
           # AI Usage Disclosure
 
@@ -147,9 +163,12 @@
           * Fortran Software Library for NASA scientists and engineers to work with Spacecraft and Planetary Ephemeris information
           * Ephemeris information is the positions and orientations of planets and spacecraft as a function of time.
           * Also: where each instrument is mounted and points, plus camera details (focal lengths, fields of view)
+          * Roots in the Voyager mission, formalized in the early 1980's; JPL provides Fortran, C, Java, IDL and MATLAB interfaces, 600+ functions
 
-          https://naif.jpl.nasa.gov/naif/spiceconcept.html
+          https://naif.jpl.nasa.gov/naif/spiceconcept.html<br>
+          https://naif.jpl.nasa.gov/naif/spicehistory.html
           ---
+          <!-- .slide: class="side-by-side even" -->
           ## What can you do with SPICE (briefly)
           * coordinate, time, and frame conversions
           * lookup/replay NASA mission and planetary ephemeris
@@ -159,15 +178,13 @@
             - when will this asteroid pass in front of this star from this surface point?
             - what is the illumination geometry at this date at this surface point?
 
-          https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/info/mostused.html
-          ---
-          ## Even more about SPICE
-          * Original components date to the Voyager mission, but SPICE formalized in early 1980's
-          * Developed in F77, translated to C (CSPICE) via f2c
-          * JPL provides Fortran, C, Java, IDL, MATLAB interfaces
-          * Over 600 individual functions
+          <figure class="captioned">
+            <img alt="SPICE geometry finder examples: occultation, altitude range, transit, instrument pointing" src="images/spice_naif_slide_what_can_spice_do.jpg" />
+            <figcaption>Credit: NASA JPL NAIF</figcaption>
+          </figure>
 
-          https://naif.jpl.nasa.gov/naif/spicehistory.html
+          https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/info/mostused.html
+          <!-- .element: class="full-width" -->
           ---
           ## How does SPICE work?
 
@@ -204,34 +221,15 @@
             <div class="stage you"><b>SpiceyPy</b><span>ctypes wrappers, since 2014</span></div>
           </div>
 
-          * 600+ CSPICE functions wrapped, plus a Cython submodule (2025) on the same library
-          * docs on readthedocs, > 99% code coverage on codecov
-          ---
-          <!-- .slide: class="wheels-slide" -->
-          ## One release, 31 wheels
+
           | | macOS x86-64 | macOS arm64 | Linux x86-64 | Linux aarch64 | Windows x86-64 | Browser (wasm32) |
           |---|:-:|:-:|:-:|:-:|:-:|:-:|
-          | CPython 3.10 | ✓ | ✓ | ✓ | ✓ | ✓ |  |
-          | CPython 3.11 | ✓ | ✓ | ✓ | ✓ | ✓ |  |
-          | CPython 3.12 | ✓ | ✓ | ✓ | ✓ | ✓ |  |
-          | CPython 3.13 | ✓ | ✓ | ✓ | ✓ | ✓ |  |
-          | CPython 3.14 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-          | CPython 3.15 | ✓ | ✓ | ✓ | ✓ | ✓ |  |
+          | CPython | 3.10–3.15 | 3.10–3.15 | 3.10–3.15 | 3.10–3.15 | 3.10–3.15 | 3.14 |
 
+          * 600+ CSPICE functions wrapped, plus a Cython submodule (2025) on the same library
           * scikit-build-core runs CMake straight from `pyproject.toml`
-          * cibuildwheel builds the matrix on GitHub Actions, CSPICE compiled once per platform and vendored into each wheel
-          * also on conda-forge
-          ---
-          <!-- .slide: class="anatomy-slide" -->
-          ## Anatomy of a browser wheel
-          <div class="wheelname"><span class="w-pkg">spiceypy-8.3.0</span>-<span class="w-py">cp314-cp314</span>-<span class="w-plat">pyemscripten_2026_0</span>_<span class="w-arch">wasm32</span>.whl</div>
-
-          * <span class="w-py">cp314-cp314</span>: CPython 3.14, the Python inside Pyodide
-          * <span class="w-plat">pyemscripten_2026_0</span>: the PEP 783 platform tag, Pyodide's 2026 ABI
-          * <span class="w-arch">wasm32</span>: WebAssembly, binary code your browser runs
-          * Emscripten compiles C (CSPICE) to Wasm; Pyodide is CPython itself, compiled to Wasm
-
-          PEP 783 lets this wheel live on PyPI next to the other 30. The next slide installs it.
+          * cibuildwheel builds 31 wheels per release on GitHub Actions, CSPICE compiled once per platform; also on conda-forge
+          * docs on readthedocs, > 99% code coverage on codecov
           ---
           <!-- .slide: class="steal-slide" -->
           ## Steal this for your C-wrapper library
@@ -239,6 +237,32 @@
           2. **CMake + scikit-build-core** builds the C library, all driven from `pyproject.toml`
           3. **cibuildwheel** for the platform matrix; `--platform pyodide` adds the browser wheel
           4. **Build the C dependency once per platform**, not once per Python version
+          ---
+          <!-- .slide: class="browser-slide" -->
+          ## Python, in your browser or phone
+          <div class="cols">
+            <div>
+              <h3>What's running</h3>
+              <ul>
+                <li><b>Emscripten</b>: compiles C/C++ to WebAssembly (Wasm), code your browser can run</li>
+                <li><b>Pyodide</b>: CPython itself compiled to Wasm, with numpy, matplotlib and more</li>
+                <li><b>PyScript</b>: Pyodide in a web page; every editor in this deck is a PyScript cell</li>
+                <li><b>SpiceyPy</b>: NAIF's CSPICE compiled to Wasm, the same C code as the desktop wheels</li>
+              </ul>
+            </div>
+            <div>
+              <h3>Why it's cool</h3>
+              <ul>
+                <li>real CSPICE running client side: no server, nothing to install</li>
+                <li>interactive docs and teaching material: edit the example, run it</li>
+                <li>easier for people new to Python (or SPICE) to try</li>
+                <li>richer visuals: results flow straight into matplotlib, maps and three.js</li>
+                <li>runs anywhere a browser does, even your phone</li>
+              </ul>
+            </div>
+          </div>
+
+          **PEP 783** gives Wasm wheels a platform tag of their own (`pyemscripten`), so they are distributed via PyPI. This deck installs SpiceyPy 8.3.0's `pyemscripten_2026_0` wheel, built for this year's Pyodide.
           ---
           ## SpiceyPy, live in your browser
 
