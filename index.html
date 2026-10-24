@@ -440,7 +440,7 @@
           ## Make Santa Monica Frame Kernel
           Name the site, and give it a topocentric frame (+Z up, +X north), fixed to the Earth:
           ```python
-          lon, lat = -118.4912, 34.0195  # Santa Monica, degrees
+          lon, lat = -118.494678, 34.016031 # Just outside this building
           spice.boddef('SANTA_MONICA', 399901)
           spice.lmpool([
               "FRAME_SANTA_MONICA_TOPO = 1399901",
@@ -573,6 +573,8 @@
             </ul>
             <p class="disclaimer">NAIF, NASA, ESA and the USGS do not endorse this talk.</p>
           </div>
+          ---
+          # Backup Slides
           ---
           ## What else compares to SPICE?
 

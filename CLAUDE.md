@@ -209,8 +209,9 @@ http server for this folder, then drive the deck. Gotchas learned:
   M20 env: `ready!`, `We loaded 20 Kernel files`, `Sampling 21600 times over 45 sols`,
   `Successfully grabbed 21600 positions in IAU_MARS frame.`, an `<img>` in `#mplm20`,
   and the folium map in `#folium_m20`; then the replay env (above); eclipse env:
-  `Loaded 3 kernels`, then (searching from 2026-10-11; the search starts at the
-  browser's current time, so these two counts shrink as dates pass)
+  `Loaded 3 kernels`, then (site `lon, lat = -118.494678, 34.016031`, re-verified
+  2026-10-23; the search starts at the browser's current time, so these two counts
+  shrink as dates pass)
   `The Moon passes within 2° of the Sun 31 times`; gfoclt prints all 7 eclipse windows,
   day or night (first `Mon Aug 02 2027, 01:59 AM to 02:36 AM PDT`); gfposc keeps the
   3 with the Sun up: `Sun Jan 14 2029, 07:07 AM to 09:44 AM PST`, `Fri Nov 14 2031, 01:01 PM
