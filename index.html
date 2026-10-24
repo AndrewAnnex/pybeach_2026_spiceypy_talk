@@ -16,7 +16,7 @@
       /* the replay viewer fills its slide; it paints its own black background and control bar */
       .replay-slide #replay { width: 100%; height: 600px; }
       .replay-slide .cred-star { font-size: 0.5em; vertical-align: super; opacity: .6; }
-      .replay-slide .cred-note { font-size: 0.4em; opacity: .55; margin: 4px 0 0; text-align: right; }
+      .replay-slide .cred-note { font-size: 0.4em; opacity: .55; margin: 4px 0 0; text-align: left; }  /* left: clear of the nav arrows */
       .credits-slide .refs { font-size: 0.5em; text-align: left; overflow-wrap: anywhere; }
       .credits-slide .refs ul { margin: 0.4em 0; }
       .credits-slide .refs li { margin-bottom: 0.25em; }
@@ -54,11 +54,19 @@
       .pipeline-slide ul { font-size: 0.65em; margin-top: 0.6em; }
       .steal-slide ol { font-size: 0.85em; }
       .pipeline-slide code, .steal-slide code { font-size: 0.85em; }
-      .browser-slide .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; text-align: left; }
-      .browser-slide h3 { font-size: 0.75em; color: #a6e22e; margin-bottom: 0.3em; }
-      .browser-slide ul { font-size: 0.62em; margin: 0; }
+      /* Pyodide slide: bullets left, live tkvrsn cell right, PEP 783 note spanning both */
+      .reveal .slides section.present.side-by-side.browser-slide { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
+      .browser-slide > div:first-of-type { text-align: left; }
+      .browser-slide h3 { font-size: 0.75em; color: #a6e22e; margin: 0.4em 0 0.3em; }
+      .browser-slide ul { font-size: 0.5em; margin: 0; }
       .browser-slide li { margin-bottom: 0.3em; }
-      .browser-slide p { font-size: 0.6em; margin-top: 1em; }
+      .browser-slide p { font-size: 0.5em; margin-top: 0.6em; }
+      /* call to action: small pyodide.org QR beside one line of text */
+      .browser-slide .learn { display: flex; align-items: center; justify-content: center; gap: 24px; }
+      .browser-slide .learn p { margin: 0; max-width: 760px; text-align: left; }
+      .browser-slide .qr { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 0.4em; }
+      .browser-slide .qr svg { width: 90px; height: 90px; border-radius: 6px; }
+      .browser-slide .qr-url { opacity: .7; }
       .browser-slide code { font-size: 0.9em; }
       /* take-home slide: a row of QR cards, each drawn from its link's href (see drawQRCodes) */
       .thanks-slide .qr-row { display: flex; justify-content: center; gap: 56px; margin: 0.5em 0; }
@@ -71,7 +79,9 @@
       /* folium output: hide Jupyter's "Trust Notebook" fallback text; square map instead of 60% height */
       #folium_m20 span { display: none; }
       /* map-slide: equal columns, map stretched to the editor's height (replaces folium's 60% padding box) */
-      .reveal .slides section.present.side-by-side.map-slide { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; }
+      /* the editor sizes itself to its longest line (~70 chars), so 11:9 columns + 16px code keep it inside its half */
+      .reveal .slides section.present.side-by-side.map-slide { grid-template-columns: minmax(0, 11fr) minmax(0, 9fr); align-items: stretch; }
+      .map-slide .pyscript-demo .py-editor-input > div { font-size: 16px; }
       .map-slide #folium_m20 > div, .map-slide #folium_m20 > div > div { height: 100% !important; padding-bottom: 0 !important; }
       .map-slide #folium_m20 iframe { max-width: 100%; max-height: 100%; }  /* undo reveal's 95% iframe cap */
       /* images in a side-by-side slide; beats reveal's default img frame */
@@ -108,13 +118,17 @@
           Andrew Annex, Ph.D.
           PyBeach 2026
           ---
+          # AI Usage Disclosure
+
+          * Project pre-dates Gen-AI
+          * This slide deck does not
+          * No, I didn't just one-shot this presentation.
+          * AI used to get deployment correct and to write demos
+          ---
           <!-- .slide: id="hook" -->
           ## When is the next partial solar eclipse visible from Santa Monica?
 
-          Guess the year...
-          <!-- .element: class="fragment" -->
-
-          We'll compute it live, in Python, in this browser, with the same NASA toolkit planetary missions use.
+          We'll compute it live, in Python, in this browser, with NASA software.
           <!-- .element: class="fragment" -->
 
           Along the way: retrace Perseverance's drive on Mars, and replay Cassini's flyby of Enceladus in 3D.
@@ -136,31 +150,23 @@
           www.andrewannex.com
           <!-- .element: class="full-width" -->
           ---
-          # AI Usage Disclosure
-
-          * Project pre-dates Gen-AI
-          * This slide deck does not
-          * No, I didn't just one-shot this presentation.
-          * AI used to get deployment correct and to write demos
-
-          ---
           <!-- .slide: class="side-by-side star-slide" -->
           ## What is SpiceyPy (briefly)
           * Open source Python library I started in 2014
-          * MIT licensed
-          * macOS windows linux emscripten (new)
           * Wraps NASA JPL's SPICE toolkit (more on this soon)
+          * MIT licensed
+          * macOS, windows, linux, emscripten
           * Supported by NASA PDART grant 80NSSC25K7040
 
           <a href="https://www.star-history.com/?repos=andrewannex%2Fspiceypy&type=date&releases=&legend=bottom-right">
             <img alt="SpiceyPy GitHub star history" src="images/star_history_spiceypy.png" />
           </a>
 
-          okay, but what is JPL's SPICE toolkit then?
+          okay, but what is NASA JPL's SPICE toolkit then?
           <!-- .element: class="full-width" -->
           ---
           ## What is SPICE (briefly)
-          * Fortran Software Library for NASA scientists and engineers to work with Spacecraft and Planetary Ephemeris information
+          * Software Library for NASA scientists and engineers to work with Spacecraft and Planetary Ephemeris information
           * Ephemeris information is the positions and orientations of planets and spacecraft as a function of time.
           * Also: where each instrument is mounted and points, plus camera details (focal lengths, fields of view)
           * Roots in the Voyager mission, formalized in the early 1980's; JPL provides Fortran, C, Java, IDL and MATLAB interfaces, 600+ functions
@@ -196,17 +202,6 @@
 
           #### more on this later...
           ---
-          ## What else compares to SPICE?
-
-          * JPL Horizons (astroquery): web service, quick lookups, little customization
-          * Skyfield / astropy: Earth-based observing (planets, stars, satellites)
-            - not NASA mission data, nor every body, frame or ephemeris type
-          * NAIF WebGeoCalc: server-based SPICE, different API
-          * JPL MONTE: JPL's navigation software, not open source
-
-          SPICE: any observer, any target, any frame, if there's a kernel for it
-          not a mission-design tool like STK or NASA's GMAT; SPICE is lower level
-          ---
           <!-- .slide: class="pipeline-slide" -->
           ## From Fortran to `pip install`
           <div class="pipeline">
@@ -233,46 +228,36 @@
           ---
           <!-- .slide: class="steal-slide" -->
           ## Steal this for your C-wrapper library
-          1. **Tests first**: at least one pytest per wrapped function, run against every wheel, even inside Pyodide. They proved each platform actually worked before shipping
+          1. **Tests first**: at least one pytest per wrapped function, run against every wheel, even inside Pyodide. They proved each platform actually worked before shipping. Track your coverage.
           2. **CMake + scikit-build-core** builds the C library, all driven from `pyproject.toml`
           3. **cibuildwheel** for the platform matrix; `--platform pyodide` adds the browser wheel
-          4. **Build the C dependency once per platform**, not once per Python version
           ---
-          <!-- .slide: class="browser-slide" -->
-          ## Python, in your browser or phone
-          <div class="cols">
-            <div>
-              <h3>What's running</h3>
-              <ul>
-                <li><b>Emscripten</b>: compiles C/C++ to WebAssembly (Wasm), code your browser can run</li>
-                <li><b>Pyodide</b>: CPython itself compiled to Wasm, with numpy, matplotlib and more</li>
-                <li><b>PyScript</b>: Pyodide in a web page; every editor in this deck is a PyScript cell</li>
-                <li><b>SpiceyPy</b>: NAIF's CSPICE compiled to Wasm, the same C code as the desktop wheels</li>
-              </ul>
-            </div>
-            <div>
-              <h3>Why it's cool</h3>
-              <ul>
-                <li>real CSPICE running client side: no server, nothing to install</li>
-                <li>interactive docs and teaching material: edit the example, run it</li>
-                <li>easier for people new to Python (or SPICE) to try</li>
-                <li>richer visuals: results flow straight into matplotlib, maps and three.js</li>
-                <li>runs anywhere a browser does, even your phone</li>
-              </ul>
-            </div>
+          <!-- .slide: class="side-by-side browser-slide" -->
+          ## Pyodide runs SpiceyPy in browsers
+          <div>
+            <h3>What is Pyodide?</h3>
+            <ul>
+              <li><b>CPython compiled to WebAssembly</b>: real Python in any browser, even phones</li>
+              <li>numpy, scipy, pandas, matplotlib included; <code>micropip</code> adds more from PyPI</li>
+              <li>no server: your code runs on your machine, in the tab</li>
+            </ul>
+            <h3>How SpiceyPy gets here</h3>
+            <ul>
+              <li><b>Emscripten</b> compiles CSPICE to Wasm: same C code as the desktop wheels</li>
+              <li><b>PEP 783</b>: <code>pyemscripten</code> wheels ship on PyPI like any other platform</li>
+              <li><b>Pyodide</b> imports it; <b>PyScript</b> wraps that into every editor here</li>
+            </ul>
           </div>
 
-          **PEP 783** gives Wasm wheels a platform tag of their own (`pyemscripten`), so they are distributed via PyPI. This deck installs SpiceyPy 8.3.0's `pyemscripten_2026_0` wheel, built for this year's Pyodide.
-          ---
-          ## SpiceyPy, live in your browser
-
-          * slide deck uses pyodide via pyscript
-          * this is actual python code and emscripten compiled CSPICE running client side
           ```python
           import spiceypy as spice
-          print(spice.tkvrsn("TOOLKIT"))
+          print(spice.__version__)
           ```
-          #### tkvrsn: which CSPICE version is running?
+
+          <div class="learn full-width">
+            <a class="qr" href="https://pyodide.org/">Learn Pyodide</a>
+            <p><b>Try it tonight:</b> pyodide.org has a Python console in your browser tab, nothing to install. Then make your own docs runnable, like SpiceyPy's.</p>
+          </div>
           ---
           <!-- .slide: id="m20" -->
           ## Demo: Mars Perseverance Rover Three Forks Sample Depot
@@ -432,7 +417,7 @@
           <!-- .slide: class="replay-slide" -->
           ## 2009-11-21: Enceladus, E8 Cassini flyby <span class="cred-star">*</span>
           <div id="replay"></div>
-          <p class="cred-note">* kernels, imagery and models credited on the last slide</p>
+          <p class="cred-note">* kernels, imagery and models credited on the Credits slide</p>
           ---
           <!-- .slide: id="eclipse" -->
           ## Demo: The next solar eclipse over Santa Monica
@@ -588,6 +573,17 @@
             </ul>
             <p class="disclaimer">NAIF, NASA, ESA and the USGS do not endorse this talk.</p>
           </div>
+          ---
+          ## What else compares to SPICE?
+
+          * JPL Horizons (astroquery): web service, quick lookups, little customization
+          * Skyfield / astropy: Earth-based observing (planets, stars, satellites)
+            - not NASA mission data, nor every body, frame or ephemeris type
+          * NAIF WebGeoCalc: server-based SPICE, different API
+          * JPL MONTE: JPL's navigation software, not open source
+
+          SPICE: any observer, any target, any frame, if there's a kernel for it
+          not a mission-design tool like STK or NASA's GMAT; SPICE is lower level
 
         </textarea>
       </section>

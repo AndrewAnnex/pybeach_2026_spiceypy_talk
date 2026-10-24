@@ -59,8 +59,11 @@ context, so the live cells break on plain http.
   web-mercator **TMS** tileset (rows count from the bottom; see its
   `tilemapresource.xml`), zoom 8–19: needs `tms=True`, default CRS (no
   `crs='EPSG4326'`), `max_native_zoom=19`. Wrong scheme = 403s. The `map-slide`
-  class gives equal `minmax(0, 1fr)` columns and stretches the folium iframe to the
-  editor's height (plain `1fr` lets long code lines widen the editor column).
+  class gives `minmax(0, 11fr) minmax(0, 9fr)` columns, drops that editor's code to
+  16px, and stretches the folium iframe to the editor's height. CodeMirror sizes the
+  editor to its longest line (~70 chars) and never wraps or scrolls, so `min-width: 0`
+  can't contain it: at 18px in equal columns it ran ~115px under the map. If the cell's
+  longest line grows, re-check that the editor's right edge stays left of the map.
 
 ## The 3D replay demo (`#replay-demo` .. the `.replay-slide`)
 
@@ -202,7 +205,7 @@ http server for this folder, then drive the deck. Gotchas learned:
   set and a canvas in `#replay`. About 12 s of cell time once the env is warm.
   NOTE: PyScript upgrades a promoted `<script type="py-editor">` asynchronously — poll for
   `.py-editor-box` before clicking Run, or the first cell looks like it has no editor.
-- Known-good outputs to assert, in slide order: `CSPICE_N0067`;
+- Known-good outputs to assert, in slide order: `8.3.0` (Pyodide slide prints `spice.__version__`);
   M20 env: `ready!`, `We loaded 20 Kernel files`, `Sampling 21600 times over 45 sols`,
   `Successfully grabbed 21600 positions in IAU_MARS frame.`, an `<img>` in `#mplm20`,
   and the folium map in `#folium_m20`; then the replay env (above); eclipse env:
